@@ -1,0 +1,19 @@
+{
+	"name": "youtube-download",
+	"version": "1.0.0",
+	"description": "Downloads all liked videos",
+	"main": "index.js",
+	"type": "module",
+	"scripts": {
+		"start": "node ./index.js"
+	},
+	"author": "Anatoliy Oblaukhov",
+	"license": "ISC",
+	"dependencies": {
+		"@googleapis/youtube": "^4.2.0",
+		"execa": "^6.1.0",
+		"googleapis": "^100.0.0",
+		"open": "^8.4.0"
+	},
+	"devDependencies": {}
+}
