@@ -1,4 +1,4 @@
-# youtube-likes-download
+# youtube-likes-downloader
 
 Downloads your favourite videos onto local drive
 
@@ -12,6 +12,10 @@ Downloads your favourite videos onto local drive
 - Alternative way is calling `youtube-dl` or `yt-dlp` directly with entering your username and password.
 - This software is being provided "as-is".
 - Make sure that you understand what you do.
+
+## Prerequisites
+
+You need to have `yt-dlp` installed
 
 ## Installation
 
