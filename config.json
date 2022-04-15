@@ -6,16 +6,24 @@
 	},
 	"scopes": ["https://www.googleapis.com/auth/youtube.readonly"],
 	"outputDir": "output",
-	"mediaDir": "B:/Youtube/media",
+	"mediaDir": "B:/Youtube/media/favorites",
+	"restart": {
+		"enabled": false,
+		"milliSeconds": 300000
+	},
 	"flags": [
+		"--format-sort", "vcodec:h264,acodec:mp3",
+		"--merge-output-format", "mp4",
+		"--sponsorblock-remove", "sponsor",
 		"--output", "%(title)s [%(channel)s]",
 		"--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36",
-		"--merge-output-format", "mp4",
+		"--geo-bypass",
 		"--no-playlist",
 		"--no-overwrites",
 		"--no-part",
 		"--continue",
-		"--geo-bypass",
+		"--abort-on-error",
+		"--verbose",
 		"--write-thumbnail",
 		"--write-description",
 		"--write-info-json"
