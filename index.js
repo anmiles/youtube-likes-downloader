@@ -109,8 +109,6 @@ async function getAuth(){
 	return auth;
 }
 
-
-
 async function downloadData(outputFilename) {
 	const auth = await getAuth();
 
@@ -136,15 +134,15 @@ async function downloadData(outputFilename) {
 }
 
 async function downloadVideos(inputFilename) {
-	if (!fs.existsSync(config.mediaDir)) fs.mkdirSync(config.mediaDir);
-	const downloadArchive = `${inputFilename}.archive.bak`;
+	if (!fs.existsSync(config.outputDir)) fs.mkdirSync(config.outputDir);
+	const downloadArchive = path.join(config.inputDir, '.ytdlp');
 	if (!fs.existsSync(downloadArchive)) fs.writeFileSync(downloadArchive, '');
 
 	const args = ['yt-dlp', [
 		'--batch-file', path.resolve(inputFilename),
 		'--download-archive', path.resolve(downloadArchive),
 		...config.flags
-	], {cwd: config.mediaDir}];
+	], {cwd: config.outputDir}];
 
 	const stopIf = () => {
 		distinctLines(downloadArchive);
@@ -182,7 +180,7 @@ async function execaRestart(file, args, options, stopIf) {
 }
 
 async function main(){
-	const youtubeJSON = path.join(config.outputDir, 'youtube.json');
+	const youtubeJSON = path.join(config.inputDir, 'favorites.json');
 	await downloadData(youtubeJSON);
 	await downloadVideos(youtubeJSON);
 	console.log(chalk.green('Done!'));

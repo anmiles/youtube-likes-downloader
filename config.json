@@ -5,8 +5,8 @@
 		"path": "oauthcallback"
 	},
 	"scopes": ["https://www.googleapis.com/auth/youtube.readonly"],
+	"inputDir": "input",
 	"outputDir": "output",
-	"mediaDir": "B:/Youtube/media/favorites",
 	"restart": {
 		"enabled": false,
 		"milliSeconds": 300000
