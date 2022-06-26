@@ -1,0 +1,29 @@
+{
+	"compilerOptions": {
+		"module": "CommonJS",
+		"target": "ES2019",
+
+		"moduleResolution": "node",
+		"resolveJsonModule": true,
+
+		"rootDir": "./src",
+		"outDir": "./dist",
+
+		"allowJs": false,
+		"sourceMap": true,
+		"declaration": true,
+		"noImplicitAny": true,
+		"esModuleInterop": true,
+		"strictNullChecks": true,
+		"allowSyntheticDefaultImports": true,
+	},
+	"exclude": [
+		"**/node_modules/",
+		"**/__tests__/",
+		"coverage/",
+		"dist/",
+		"input/",
+		"output/",
+		"secrets/"
+	]
+}

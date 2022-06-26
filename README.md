@@ -1,26 +1,57 @@
 # youtube-likes-downloader
 
-Downloads your favourite videos onto local drive
+Downloads your liked videos onto local drive
 
-## IMPORTANT
+----
 
-**Due to recent incidents with some popular npm packages compromised, please do any actions below only using isolated (sandbox) environment.**
+## IMPORTANT! Notes about migration from v1 to v2
 
-## WARNING
+If you are going to clone this project first time, please skip this section.
+If you are going to fetch/pull/checkout this repository, please follow these steps:
 
-- You have to be familiar with Google API console.
-- Alternative way is calling `youtube-dl` or `yt-dlp` directly with entering your username and password.
-- This software is being provided "as-is".
-- Make sure that you understand what you do.
+1. **If you have `output` file** - do nothing
+1. **If you have `output` directory**:
+    1. Rename `output` to `output2`
+    1. Update repository to latest version
+    1. Rename `output2` back to `output`
+1. **Getting compatible with multi-profile support**
+    1. Come up with a profile name that will be used for your named profile
+    1. Run `npm run migrate profile` (where `profile` is profile name your chosen).
+        - This will rename all profile files into appropriate ones.
+        - The command will throw an error if destination files already exist.
+        - The command will do nothing if you still didn't have any data
+    1. You can add more profiles, see [Adding profiles](#Adding%20profiles) below.
+
+----
 
 ## Prerequisites
 
-You need to have `yt-dlp` installed
+- Have `yt-dlp` installed.
+- Be familiar with Google API console and know how to create project with credentials here
 
 ## Installation
 
+1. Install dependencies
 `npm install`
+1. Build
+`npm run build`
+1. Test everything
+`npm test`
+
+## Adding profiles
+
+This application may work with multiple profiles (download videos liked from multiple youtube accounts).
+
+1. Come up with any profile name you want
+1. Execute `npm run create profile`, where `profile` is profile name your came up with
+You can create as many profiles as you want.
 
 ## Downloading
 
-`npm start`
+`npm start` will download all liked videos. It never re-download already download ones, just add newly liked ones.
+
+1. Automatic download by schedule
+    - Run `npm run login` to explicitly retrieve all credentials in advance
+    - Schedule task that will run `npm start` periodically
+1. Manual download
+    - Run `npm start` manually. If needed, it will interact with you to retrieve credentials. But you still could run `npm run login` to explicitly retrieve all credentials in advance.

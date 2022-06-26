@@ -1,3 +1,6 @@
-node_modules
-secrets/
-input/
+**/node_modules
+coverage
+dist
+input
+output
+secrets
