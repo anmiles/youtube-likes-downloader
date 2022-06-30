@@ -1,11 +1,11 @@
 import { google } from 'googleapis';
 import type GoogleApis from 'googleapis';
-import { getProfiles } from '../profiles';
-import { getSecrets, getCredentials } from '../secrets';
+import profiles from '../profiles';
+import secrets from '../secrets';
 
-import * as auth from '../auth';
-const original = jest.requireActual('../auth') as typeof auth;
-jest.mock('../auth', () => ({
+import auth from '../auth';
+const original = jest.requireActual('../auth').default as typeof auth;
+jest.mock<typeof auth>('../auth', () => ({
 	login     : jest.fn(),
 	getClient : jest.fn(),
 	getAuth   : jest.fn().mockImplementation(async () => googleAuth),
@@ -20,24 +20,24 @@ jest.mock('googleapis', () => ({
 	},
 }));
 
-jest.mock('../profiles', () => ({
-	getProfiles : jest.fn().mockImplementation(() => profiles),
+jest.mock<Partial<typeof profiles>>('../profiles', () => ({
+	getProfiles : jest.fn().mockImplementation(() => allProfiles),
 }));
 
-jest.mock('../secrets', () => ({
-	getSecrets     : jest.fn().mockImplementation(async () => secrets),
+jest.mock<Partial<typeof secrets>>('../secrets', () => ({
+	getSecrets     : jest.fn().mockImplementation(async () => secretsObject),
 	getCredentials : jest.fn().mockImplementation(async () => credentials),
 }));
 
-const profile  = 'username';
-const profiles = [ 'username1', 'username2' ];
-const youtube  = 'youtubeClient';
+const profile     = 'username';
+const allProfiles = [ 'username1', 'username2' ];
+const youtube     = 'youtubeClient';
 
 const googleAuth = {
 	setCredentials : jest.fn(),
 };
 
-const secrets = {
+const secretsObject = {
 	web : {
 		/* eslint-disable camelcase */
 		client_id     : 'client_id',
@@ -53,12 +53,12 @@ describe('src/lib/auth', () => {
 	describe('login', () => {
 		it('should get profiles', async () => {
 			await original.login();
-			expect(getProfiles).toBeCalledWith();
+			expect(profiles.getProfiles).toBeCalledWith();
 		});
 
 		it('should auth each profile', async () => {
 			await original.login();
-			profiles.forEach((profile) => {
+			allProfiles.forEach((profile) => {
 				expect(auth.getAuth).toBeCalledWith(profile);
 			});
 		});
@@ -89,17 +89,17 @@ describe('src/lib/auth', () => {
 	describe('getAuth', () => {
 		it('should get secrets', async () => {
 			await original.getAuth(profile);
-			expect(getSecrets).toBeCalledWith(profile);
+			expect(secrets.getSecrets).toBeCalledWith(profile);
 		});
 
 		it('should get credentials', async () => {
 			await original.getAuth(profile);
-			expect(getCredentials).toBeCalledWith(profile, googleAuth);
+			expect(secrets.getCredentials).toBeCalledWith(profile, googleAuth);
 		});
 
 		it('should create OAuth2 instance', async () => {
 			await original.getAuth(profile);
-			expect(google.auth.OAuth2).toBeCalledWith(secrets.web.client_id, secrets.web.client_secret, secrets.web.redirect_uris[0]);
+			expect(google.auth.OAuth2).toBeCalledWith(secretsObject.web.client_id, secretsObject.web.client_secret, secretsObject.web.redirect_uris[0]);
 		});
 
 		it('should set credentials', async () => {

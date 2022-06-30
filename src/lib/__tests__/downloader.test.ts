@@ -1,9 +1,10 @@
+import path from 'path';
 import execa from 'execa';
-import { getOutputDir, getDownloadArchive } from '../paths';
+import paths from '../paths';
 
-import * as downloader from '../downloader';
+import downloader from '../downloader';
 
-jest.mock('path', () => ({
+jest.mock<Partial<typeof path>>('path', () => ({
 	resolve : jest.fn().mockImplementation((relativePath) => `/rootPath/${relativePath}`),
 }));
 
@@ -13,7 +14,7 @@ jest.mock('execa', () => jest.fn().mockImplementation(() => ({
 	},
 })));
 
-jest.mock('../paths', () => ({
+jest.mock<Partial<typeof paths>>('../paths', () => ({
 	getOutputDir       : jest.fn().mockImplementation(() => outputDir),
 	getDownloadArchive : jest.fn().mockImplementation(() => downloadArchive),
 }));
@@ -22,9 +23,9 @@ const profile         = 'username';
 const likesFile       = 'likesFile';
 const outputDir       = 'outputDir';
 const downloadArchive = 'downloadArchive';
-let hasStdout: boolean;
 
 const pipe = jest.fn();
+let hasStdout: boolean;
 
 describe('src/lib/downloader', () => {
 	describe('download', () => {
@@ -35,13 +36,13 @@ describe('src/lib/downloader', () => {
 		it('should get outputDir', async () => {
 			await downloader.download(profile, likesFile);
 
-			expect(getOutputDir).toBeCalledWith(profile);
+			expect(paths.getOutputDir).toBeCalledWith(profile);
 		});
 
 		it('should get downloadArchive', async () => {
 			await downloader.download(profile, likesFile);
 
-			expect(getDownloadArchive).toBeCalledWith(profile);
+			expect(paths.getDownloadArchive).toBeCalledWith(profile);
 		});
 
 		it('should call yt-dlp', async () => {

@@ -2,6 +2,9 @@ import path from 'path';
 import execa from 'execa';
 import { getOutputDir, getDownloadArchive } from './paths';
 
+export { download };
+export default { download };
+
 const executable = 'yt-dlp';
 
 const flags = [
@@ -22,7 +25,7 @@ const flags = [
 	'--write-info-json',
 ];
 
-export async function download(profile: string, likesFile: string): Promise<execa.ExecaChildProcess<string>> {
+async function download(profile: string, likesFile: string): Promise<execa.ExecaChildProcess<string>> {
 	const outputDir       = getOutputDir(profile);
 	const downloadArchive = getDownloadArchive(profile);
 

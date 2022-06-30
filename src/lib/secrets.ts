@@ -1,5 +1,4 @@
 import http from 'http';
-import path from 'path';
 import * as colorette from 'colorette';
 import type GoogleApis from 'googleapis';
 import type { Secrets } from '../types';
@@ -7,25 +6,28 @@ import { getJSON, getJSONAsync } from './jsonLib';
 import { info, error } from './logger';
 import { getSecretsFile, getCredentialsFile } from './paths';
 
-import * as secrets from './secrets';
+import secrets from './secrets';
+
+export { getSecrets, getCredentials };
+export default { getSecrets, getCredentials, createCredentials, checkSecrets, getSecretsError };
 
 const callbackPort = 6006;
 const callbackURI  = `http://localhost:${callbackPort}/oauthcallback`;
 const scope        = [ 'https://www.googleapis.com/auth/youtube.readonly' ];
 
-export async function getSecrets(profile: string): Promise<Secrets> {
+async function getSecrets(profile: string): Promise<Secrets> {
 	const secretsFile   = getSecretsFile(profile);
-	const secretsObject = getJSON<Secrets>(secretsFile, () => error(secrets.getSecretsError(profile, secretsFile)));
+	const secretsObject = getJSON<Secrets>(secretsFile, () => error(secrets.getSecretsError(profile, secretsFile)) as never);
 	secrets.checkSecrets(profile, secretsObject, secretsFile);
 	return secretsObject;
 }
 
-export async function getCredentials(profile: string, auth: GoogleApis.Common.OAuth2Client): Promise<GoogleApis.Auth.Credentials> {
+async function getCredentials(profile: string, auth: GoogleApis.Common.OAuth2Client): Promise<GoogleApis.Auth.Credentials> {
 	const credentialsFile = getCredentialsFile(profile);
 	return getJSONAsync(credentialsFile, () => secrets.createCredentials(profile, auth));
 }
 
-export async function createCredentials(profile: string, auth: GoogleApis.Auth.OAuth2Client): Promise<GoogleApis.Auth.Credentials> {
+async function createCredentials(profile: string, auth: GoogleApis.Auth.OAuth2Client): Promise<GoogleApis.Auth.Credentials> {
 	return new Promise((resolve) => {
 		const authUrl = auth.generateAuthUrl({
 			// eslint-disable-next-line camelcase
@@ -55,14 +57,14 @@ export async function createCredentials(profile: string, auth: GoogleApis.Auth.O
 	});
 }
 
-export function checkSecrets(profile: string, secretsObject: Secrets, secretsFile: string): true | never {
+function checkSecrets(profile: string, secretsObject: Secrets, secretsFile: string): true | void {
 	if (secretsObject.web.redirect_uris[0] === callbackURI) {
 		return true;
 	}
 	error(`Error in credentials file: redirect URI should be ${callbackURI}.\n${secrets.getSecretsError(profile, secretsFile)}`);
 }
 
-export function getSecretsError(profile: string, secretsFile: string) {
+function getSecretsError(profile: string, secretsFile: string) {
 	return [
 		`File ${secretsFile} not found!`,
 		'To obtain it, please create correct OAuth client ID:',

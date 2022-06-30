@@ -1,29 +1,30 @@
 import fs from 'fs';
-import * as jsonLib from '../jsonLib';
-import { log, warn, error } from '../logger';
+import jsonLib from '../jsonLib';
+import logger from '../logger';
+import paths from '../paths';
 
-import * as profiles from '../profiles';
-const original = jest.requireActual('../profiles') as typeof profiles;
-jest.mock('../profiles', () => ({
+import profiles from '../profiles';
+const original = jest.requireActual('../profiles').default as typeof profiles;
+jest.mock<typeof profiles>('../profiles', () => ({
 	getProfiles : jest.fn().mockImplementation(() => existingProfiles),
 	setProfiles : jest.fn(),
 	create      : jest.fn(),
 	migrate     : jest.fn(),
 }));
 
-jest.mock('fs', () => ({
+jest.mock<Partial<typeof fs>>('fs', () => ({
 	mkdirSync     : jest.fn(),
 	renameSync    : jest.fn(),
 	writeFileSync : jest.fn(),
 	existsSync    : jest.fn().mockImplementation((file) => existingFiles.includes(file)),
 }));
 
-jest.mock('../jsonLib', () => ({
+jest.mock<Partial<typeof jsonLib>>('../jsonLib', () => ({
 	getJSON   : jest.fn().mockImplementation(() => json),
 	writeJSON : jest.fn(),
 }));
 
-jest.mock('../logger', () => ({
+jest.mock<Partial<typeof logger>>('../logger', () => ({
 	log   : jest.fn(),
 	warn  : jest.fn(),
 	error : jest.fn().mockImplementation(() => {
@@ -31,7 +32,7 @@ jest.mock('../logger', () => ({
 	}),
 }));
 
-jest.mock('../paths', () => ({
+jest.mock<Partial<typeof paths>>('../paths', () => ({
 	getProfilesFile : jest.fn().mockImplementation(() => profilesFile),
 }));
 
@@ -89,7 +90,7 @@ describe('src/lib/profiles', () => {
 			const func = () => original.create('');
 
 			expect(func).toThrowError(mockError);
-			expect(error).toBeCalledWith('Usage: `npm run create profile` where `profile` - is any profile name you want');
+			expect(logger.error).toBeCalledWith('Usage: `npm run create profile` where `profile` - is any profile name you want');
 		});
 
 		it('should get profiles', () => {
@@ -124,7 +125,7 @@ describe('src/lib/profiles', () => {
 			const func = () => original.migrate('');
 
 			expect(func).toThrowError(mockError);
-			expect(error).toBeCalledWith('Usage: `npm run migrate profile` where `profile` - is any profile name you want');
+			expect(logger.error).toBeCalledWith('Usage: `npm run migrate profile` where `profile` - is any profile name you want');
 		});
 
 		it('should output error if destination file already exists', () => {
@@ -132,7 +133,7 @@ describe('src/lib/profiles', () => {
 			const func    = () => original.migrate(migratingProfile);
 
 			expect(func).toThrowError(mockError);
-			expect(error).toBeCalledWith(`Cannot move '${existingFiles[0]}' to '${existingFiles[1]}', probably data for profile '${migratingProfile}' already exists`);
+			expect(logger.error).toBeCalledWith(`Cannot move '${existingFiles[0]}' to '${existingFiles[1]}', probably data for profile '${migratingProfile}' already exists`);
 		});
 
 		it('should output error if nothing to migrate', () => {
@@ -140,7 +141,7 @@ describe('src/lib/profiles', () => {
 			const func    = () => original.migrate(migratingProfile);
 
 			expect(func).toThrowError(mockError);
-			expect(error).toBeCalledWith('There are no files to migrate');
+			expect(logger.error).toBeCalledWith('There are no files to migrate');
 		});
 
 		describe('there are files to migrate', () => {
@@ -165,14 +166,14 @@ describe('src/lib/profiles', () => {
 			it('should output progress', () => {
 				func();
 
-				expect(log).toBeCalledWith('Moving \'./secrets/tokens.json\' to \'./secrets/username3.credentials.json\'...');
-				expect(log).toBeCalledWith('Moving \'./input/favorites.json\' to \'./input/username3.txt\'...');
+				expect(logger.log).toBeCalledWith('Moving \'./secrets/tokens.json\' to \'./secrets/username3.credentials.json\'...');
+				expect(logger.log).toBeCalledWith('Moving \'./input/favorites.json\' to \'./input/username3.txt\'...');
 			});
 
 			it('should warn about manual action', () => {
 				func();
 
-				expect(warn).toBeCalledWith('Please move \'./output/\' to \'./output/username3/\' manually');
+				expect(logger.warn).toBeCalledWith('Please move \'./output/\' to \'./output/username3/\' manually');
 			});
 		});
 	});

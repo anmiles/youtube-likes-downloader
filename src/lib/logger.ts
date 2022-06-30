@@ -1,18 +1,21 @@
 import * as colorette from 'colorette';
 
-export function log(message: string): void {
+export { log, info, warn, error };
+export default { log, info, warn, error };
+
+function log(message: string): void {
 	console.log(message);
 }
 
-export function info(message: string): void {
+function info(message: string): void {
 	console.log(colorette.greenBright(message));
 }
 
-export function warn(message: string): void {
+function warn(message: string): void {
 	console.warn(colorette.yellowBright(message));
 }
 
-export function error(message: string): never {
+function error(message: string): void {
 	console.error(`${colorette.redBright(message)}\n`);
 	process.exit(1);
 }

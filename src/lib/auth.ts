@@ -3,9 +3,12 @@ import type GoogleApis from 'googleapis';
 import { getProfiles } from './profiles';
 import { getCredentials, getSecrets } from './secrets';
 
-import * as auth from './auth';
+import auth from './auth';
 
-export async function login(): Promise<void> {
+export { login, getClient };
+export default { login, getClient, getAuth };
+
+async function login(): Promise<void> {
 	const profiles = getProfiles();
 
 	for (const profile of profiles) {
@@ -13,7 +16,7 @@ export async function login(): Promise<void> {
 	}
 }
 
-export async function getClient(profile: string): Promise<GoogleApis.youtube_v3.Youtube> {
+async function getClient(profile: string): Promise<GoogleApis.youtube_v3.Youtube> {
 	const googleAuth = await auth.getAuth(profile);
 
 	return google.youtube({
@@ -22,7 +25,7 @@ export async function getClient(profile: string): Promise<GoogleApis.youtube_v3.
 	});
 }
 
-export async function getAuth(profile: string): Promise<GoogleApis.Common.OAuth2Client> {
+async function getAuth(profile: string): Promise<GoogleApis.Common.OAuth2Client> {
 	const secrets = await getSecrets(profile);
 
 	const googleAuth = new google.auth.OAuth2(

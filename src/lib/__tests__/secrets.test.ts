@@ -1,12 +1,14 @@
 import http from 'http';
+import path from 'path';
+import * as colorette from 'colorette';
 import type GoogleApis from 'googleapis';
-import * as jsonLib from '../jsonLib';
-import { info, error } from '../logger';
+import jsonLib from '../jsonLib';
+import logger from '../logger';
 import type { Secrets } from '../../types';
 
-import * as secrets from '../secrets';
-const original = jest.requireActual('../secrets') as typeof secrets;
-jest.mock('../secrets', () => ({
+import secrets from '../secrets';
+const original = jest.requireActual('../secrets').default as typeof secrets;
+jest.mock<typeof secrets>('../secrets', () => ({
 	getSecrets        : jest.fn(),
 	getCredentials    : jest.fn(),
 	createCredentials : jest.fn(),
@@ -14,7 +16,7 @@ jest.mock('../secrets', () => ({
 	getSecretsError   : jest.fn().mockImplementation(() => secretsError),
 }));
 
-jest.mock('http', () => ({
+jest.mock<Partial<typeof http>>('http', () => ({
 	createServer : jest.fn().mockImplementation((callback) => {
 		serverCallback = callback;
 
@@ -25,20 +27,20 @@ jest.mock('http', () => ({
 	}),
 }));
 
-jest.mock('path', () => ({
+jest.mock<Partial<typeof path>>('path', () => ({
 	join : jest.fn().mockImplementation((...args) => args.join('/')),
 }));
 
-jest.mock('colorette', () => ({
+jest.mock<Partial<typeof colorette>>('colorette', () => ({
 	yellow : jest.fn().mockImplementation((text) => `yellow:${text}`),
 }));
 
-jest.mock('../jsonLib', () => ({
+jest.mock<Partial<typeof jsonLib>>('../jsonLib', () => ({
 	getJSON      : jest.fn().mockImplementation(() => json),
 	getJSONAsync : jest.fn().mockImplementation(async () => json),
 }));
 
-jest.mock('../logger', () => ({
+jest.mock<Partial<typeof logger>>('../logger', () => ({
 	info  : jest.fn(),
 	error : jest.fn().mockImplementation(() => {
 		throw mockError;
@@ -117,7 +119,7 @@ describe('src/lib/secrets', () => {
 			await original.getSecrets(profile);
 
 			expect(getJSONSpy.mock.calls[0][1]).toThrowError(mockError);
-			expect(error).toBeCalledWith(secretsError);
+			expect(logger.error).toBeCalledWith(secretsError);
 		});
 
 		it('should check secrets', async () => {
@@ -205,7 +207,7 @@ describe('src/lib/secrets', () => {
 
 			await original.createCredentials(profile, auth);
 
-			expect(info).toBeCalledWith(`Please open yellow:https://authUrl in your browser using google profile for yellow:${profile} and allow access to yellow:https://www.googleapis.com/auth/youtube.readonly`);
+			expect(logger.info).toBeCalledWith(`Please open yellow:https://authUrl in your browser using google profile for yellow:${profile} and allow access to yellow:https://www.googleapis.com/auth/youtube.readonly`);
 		});
 
 		it('should ask to close webpage', async () => {
@@ -284,7 +286,7 @@ describe('src/lib/secrets', () => {
 			const func                            = () => original.checkSecrets(profile, wrongSecretsJSON, secretsFile);
 
 			expect(func).toThrowError(mockError);
-			expect(error).toBeCalledWith('Error in credentials file: redirect URI should be http://localhost:6006/oauthcallback.\nsecretsError');
+			expect(logger.error).toBeCalledWith('Error in credentials file: redirect URI should be http://localhost:6006/oauthcallback.\nsecretsError');
 		});
 	});
 

@@ -1,6 +1,6 @@
 import * as colorette from 'colorette';
 
-import * as logger from '../logger';
+import logger from '../logger';
 
 const text = 'text';
 

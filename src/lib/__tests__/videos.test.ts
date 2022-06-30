@@ -1,21 +1,21 @@
 import type GoogleApis from 'googleapis';
-import { getClient } from '../auth';
-import { log } from '../logger';
+import auth from '../auth';
+import logger from '../logger';
 
-import * as videos from '../videos';
-const original = jest.requireActual('../videos') as typeof videos;
-jest.mock('../videos', () => ({
-	getVideosList : jest.fn(),
-	getData       : jest.fn().mockImplementation(async () => videosList),
-	formatVideo   : jest.fn().mockImplementation((video) => video?.snippet?.title || 'none'),
-	sleep         : jest.fn(),
+import videos from '../videos';
+const original = jest.requireActual('../videos').default as typeof videos;
+jest.mock<typeof videos>('../videos', () => ({
+	getVideosString : jest.fn(),
+	getData         : jest.fn().mockImplementation(async () => videosList),
+	formatVideo     : jest.fn().mockImplementation((video) => video?.snippet?.title || 'none'),
+	sleep           : jest.fn(),
 }));
 
-jest.mock('../auth', () => ({
+jest.mock<Partial<typeof auth>>('../auth', () => ({
 	getClient : jest.fn().mockImplementation(async () => ({ playlistItems })),
 }));
 
-jest.mock('../logger', () => ({
+jest.mock<Partial<typeof logger>>('../logger', () => ({
 	log : jest.fn(),
 }));
 
@@ -65,7 +65,7 @@ describe('src/lib/videos', () => {
 		it('should get playlistItems API', async () => {
 			await original.getVideosString(profile);
 
-			expect(getClient).toBeCalledWith(profile);
+			expect(auth.getClient).toBeCalledWith(profile);
 		});
 
 		it('should get data from playlistItems API', async () => {
@@ -100,10 +100,10 @@ describe('src/lib/videos', () => {
 		it('should output progress', async () => {
 			await original.getData(playlistItems, itemsArgs);
 
-			expect(log).toBeCalledTimes(responses.length);
-			expect(log).toBeCalledWith('Getting video IDs (2 of 4)...');
-			expect(log).toBeCalledWith('Getting video IDs (2 of many)...');
-			expect(log).toBeCalledWith('Getting video IDs (4 of 4)...');
+			expect(logger.log).toBeCalledTimes(responses.length);
+			expect(logger.log).toBeCalledWith('Getting video IDs (2 of 4)...');
+			expect(logger.log).toBeCalledWith('Getting video IDs (2 of many)...');
+			expect(logger.log).toBeCalledWith('Getting video IDs (4 of 4)...');
 		});
 
 		it('sleep after reach request', async () => {

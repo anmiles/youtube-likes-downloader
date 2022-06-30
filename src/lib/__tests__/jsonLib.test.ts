@@ -1,9 +1,9 @@
 import fs from 'fs';
-import { error } from '../logger';
+import logger from '../logger';
 
-import * as jsonLib from '../jsonLib';
-const original = jest.requireActual('../jsonLib') as typeof jsonLib;
-jest.mock('../jsonLib', () => ({
+import jsonLib from '../jsonLib';
+const original = jest.requireActual('../jsonLib').default as typeof jsonLib;
+jest.mock<typeof jsonLib>('../jsonLib', () => ({
 	readJSON     : jest.fn().mockImplementation(() => json),
 	writeJSON    : jest.fn(),
 	getJSON      : jest.fn(),
@@ -11,13 +11,13 @@ jest.mock('../jsonLib', () => ({
 	checkJSON    : jest.fn(),
 }));
 
-jest.mock('fs', () => ({
+jest.mock<Partial<typeof fs>>('fs', () => ({
 	readFileSync  : jest.fn().mockImplementation(() => jsonString),
 	writeFileSync : jest.fn(),
 	existsSync    : jest.fn().mockImplementation(() => fileExists),
 }));
 
-jest.mock('../logger', () => ({
+jest.mock<Partial<typeof logger>>('../logger', () => ({
 	error : jest.fn().mockImplementation(() => {
 		throw mockError;
 	}),
@@ -152,12 +152,12 @@ describe('src/lib/jsonLib', () => {
 		it('should do nothing if json is truthy', () => {
 			original.checkJSON(filename, json);
 
-			expect(error).not.toBeCalled();
+			expect(logger.error).not.toBeCalled();
 		});
 		it('should output error if json is falsy', () => {
 			expect(() => original.checkJSON(filename, '')).toThrowError(mockError);
 
-			expect(error).toBeCalledWith(expect.stringContaining(filename));
+			expect(logger.error).toBeCalledWith(expect.stringContaining(filename));
 		});
 	});
 });

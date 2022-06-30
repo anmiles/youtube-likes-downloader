@@ -1,13 +1,16 @@
 import fs from 'fs';
 import path from 'path';
 
+export { getOutputDir, getDownloadArchive, getLikesFile, getProfilesFile, getSecretsFile, getCredentialsFile };
+export default { getOutputDir, getDownloadArchive, getLikesFile, getProfilesFile, getSecretsFile, getCredentialsFile };
+
 const filePaths = {
 	input   : 'input',
 	output  : 'output',
 	secrets : 'secrets',
 };
 
-export function getOutputDir(profile: string): string {
+function getOutputDir(profile: string): string {
 	const outputDir = path.join(filePaths.output, profile);
 	if (!fs.existsSync(outputDir)) {
 		fs.mkdirSync(outputDir);
@@ -15,7 +18,7 @@ export function getOutputDir(profile: string): string {
 	return outputDir;
 }
 
-export function getDownloadArchive(profile: string): string {
+function getDownloadArchive(profile: string): string {
 	const downloadArchive = path.join(filePaths.input, `${profile}.ytdlp`);
 	if (!fs.existsSync(downloadArchive)) {
 		fs.writeFileSync(downloadArchive, '');
@@ -23,7 +26,7 @@ export function getDownloadArchive(profile: string): string {
 	return downloadArchive;
 }
 
-export function getLikesFile(profile: string): string {
+function getLikesFile(profile: string): string {
 	const likesFile = path.join(filePaths.input, `${profile}.txt`);
 	if (!fs.existsSync(likesFile)) {
 		fs.writeFileSync(likesFile, '');
@@ -31,14 +34,14 @@ export function getLikesFile(profile: string): string {
 	return likesFile;
 }
 
-export function getProfilesFile() {
+function getProfilesFile() {
 	return path.join(filePaths.input, 'profiles.json');
 }
 
-export function getSecretsFile(profile: string) {
+function getSecretsFile(profile: string) {
 	return path.join(filePaths.secrets, `${profile}.json`);
 }
 
-export function getCredentialsFile(profile: string) {
+function getCredentialsFile(profile: string) {
 	return path.join(filePaths.secrets, `${profile}.credentials.json`);
 }

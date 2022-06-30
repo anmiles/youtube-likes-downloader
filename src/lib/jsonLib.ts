@@ -1,19 +1,12 @@
 import fs from 'fs';
 import { error } from './logger';
 
-import * as jsonLib from './jsonLib';
+import jsonLib from './jsonLib';
 
-export function readJSON<T>(filename: string): T {
-	const jsonString = fs.readFileSync(filename).toString();
-	return JSON.parse(jsonString) as T;
-}
+export { getJSON, getJSONAsync, writeJSON };
+export default { getJSON, getJSONAsync, writeJSON, readJSON, checkJSON };
 
-export function writeJSON<T>(filename: string, json: T): void {
-	const jsonString = JSON.stringify(json, null, '    ');
-	fs.writeFileSync(filename, jsonString);
-}
-
-export function getJSON<T>(filename: string, createCallback: () => Exclude<T, Promise<any>>): T {
+function getJSON<T>(filename: string, createCallback: () => Exclude<T, Promise<any>>): T {
 	if (fs.existsSync(filename)) {
 		return jsonLib.readJSON(filename);
 	}
@@ -24,7 +17,7 @@ export function getJSON<T>(filename: string, createCallback: () => Exclude<T, Pr
 	return json;
 }
 
-export async function getJSONAsync<T>(filename: string, createCallbackAsync: () => Promise<T>): Promise<T> {
+async function getJSONAsync<T>(filename: string, createCallbackAsync: () => Promise<T>): Promise<T> {
 	if (fs.existsSync(filename)) {
 		return jsonLib.readJSON(filename);
 	}
@@ -35,7 +28,17 @@ export async function getJSONAsync<T>(filename: string, createCallbackAsync: () 
 	return json;
 }
 
-export function checkJSON<T>(filename: string, json: T): void {
+function writeJSON<T>(filename: string, json: T): void {
+	const jsonString = JSON.stringify(json, null, '    ');
+	fs.writeFileSync(filename, jsonString);
+}
+
+function readJSON<T>(filename: string): T {
+	const jsonString = fs.readFileSync(filename).toString();
+	return JSON.parse(jsonString) as T;
+}
+
+function checkJSON<T>(filename: string, json: T): void {
 	if (json) {
 		return;
 	}

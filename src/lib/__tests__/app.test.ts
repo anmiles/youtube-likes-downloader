@@ -1,32 +1,33 @@
 import fs from 'fs';
-import { getVideosString } from '../videos';
-import { download } from '../downloader';
-import { info } from '../logger';
-import { getLikesFile } from '../paths';
-import { getProfiles } from '../profiles';
+import downloader from '../downloader';
+import logger from '../logger';
+import paths from '../paths';
+import profiles from '../profiles';
+import videos from '../videos';
 
-import * as app from '../app';
+import app from '../app';
 
-jest.mock('fs', () => ({
+jest.mock<Partial<typeof fs>>('fs', () => ({
 	writeFileSync : jest.fn(),
 }));
-jest.mock('../downloader', () => ({
+
+jest.mock<Partial<typeof downloader>>('../downloader', () => ({
 	download : jest.fn(),
 }));
 
-jest.mock('../logger', () => ({
+jest.mock<Partial<typeof logger>>('../logger', () => ({
 	info : jest.fn(),
 }));
 
-jest.mock('../paths', () => ({
+jest.mock<Partial<typeof paths>>('../paths', () => ({
 	getLikesFile : jest.fn().mockImplementation((profile) => `${profile}.txt`),
 }));
 
-jest.mock('../profiles', () => ({
+jest.mock<Partial<typeof profiles>>('../profiles', () => ({
 	getProfiles : jest.fn().mockImplementation(() => [ profile1, profile2 ]),
 }));
 
-jest.mock('../videos', () => ({
+jest.mock<Partial<typeof videos>>('../videos', () => ({
 	getVideosString : jest.fn().mockImplementation(async () => videosString),
 }));
 
@@ -43,29 +44,29 @@ describe('src/lib/app', () => {
 		it('should get profiles', async () => {
 			await app.run();
 
-			expect(getProfiles).toBeCalled();
+			expect(profiles.getProfiles).toBeCalled();
 		});
 
 		it('should output info', async () => {
 			await app.run();
 
-			expect(info).toBeCalledWith(`Downloading ${profile1}...`);
-			expect(info).toBeCalledWith(`Downloading ${profile2}...`);
-			expect(info).toBeCalledWith('Done!');
+			expect(logger.info).toBeCalledWith(`Downloading ${profile1}...`);
+			expect(logger.info).toBeCalledWith(`Downloading ${profile2}...`);
+			expect(logger.info).toBeCalledWith('Done!');
 		});
 
 		it('should get likes file', async () => {
 			await app.run();
 
-			expect(getLikesFile).toBeCalledWith(profile1);
-			expect(getLikesFile).toBeCalledWith(profile2);
+			expect(paths.getLikesFile).toBeCalledWith(profile1);
+			expect(paths.getLikesFile).toBeCalledWith(profile2);
 		});
 
 		it('should get videos list', async () => {
 			await app.run();
 
-			expect(getVideosString).toBeCalledWith(profile1);
-			expect(getVideosString).toBeCalledWith(profile2);
+			expect(videos.getVideosString).toBeCalledWith(profile1);
+			expect(videos.getVideosString).toBeCalledWith(profile2);
 		});
 
 		it('should write likes into file', async () => {
@@ -78,8 +79,8 @@ describe('src/lib/app', () => {
 		it('should download videos given likes file', async () => {
 			await app.run();
 
-			expect(download).toBeCalledWith(profile1, likesFile1);
-			expect(download).toBeCalledWith(profile2, likesFile2);
+			expect(downloader.download).toBeCalledWith(profile1, likesFile1);
+			expect(downloader.download).toBeCalledWith(profile2, likesFile2);
 		});
 	});
 });

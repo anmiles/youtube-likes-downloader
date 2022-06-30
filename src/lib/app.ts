@@ -1,11 +1,14 @@
 import fs from 'fs';
-import { getVideosString } from './videos';
 import { download } from './downloader';
 import { info } from './logger';
 import { getLikesFile } from './paths';
 import { getProfiles } from './profiles';
+import { getVideosString } from './videos';
 
-export async function run(): Promise<void> {
+export { run };
+export default { run };
+
+async function run(): Promise<void> {
 	const profiles = getProfiles();
 
 	for (const profile of profiles) {

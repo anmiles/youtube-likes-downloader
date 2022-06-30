@@ -1,24 +1,24 @@
 import fs from 'fs';
-import * as paths from '../paths';
+import path from 'path';
 
-const mock: Record<keyof typeof paths, jest.Mock<any, any>> = {
+import paths from '../paths';
+const original = jest.requireActual('../paths').default as typeof paths;
+jest.mock<typeof paths>('../paths', () => ({
 	getOutputDir       : jest.fn(),
 	getProfilesFile    : jest.fn(),
 	getDownloadArchive : jest.fn(),
 	getLikesFile       : jest.fn(),
 	getSecretsFile     : jest.fn(),
 	getCredentialsFile : jest.fn(),
-};
-jest.mock('../paths', () => mock);
-const original = jest.requireActual('../paths') as typeof paths;
+}));
 
-jest.mock('fs', () => ({
+jest.mock<Partial<typeof fs>>('fs', () => ({
 	mkdirSync     : jest.fn(),
 	writeFileSync : jest.fn(),
 	existsSync    : jest.fn().mockImplementation(() => fileExists),
 }));
 
-jest.mock('path', () => ({
+jest.mock<Partial<typeof path>>('path', () => ({
 	join : jest.fn().mockImplementation((...args) => args.join('/')),
 }));
 

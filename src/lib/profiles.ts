@@ -3,19 +3,22 @@ import { getJSON, writeJSON } from './jsonLib';
 import { log, warn, error } from './logger';
 import { getProfilesFile } from './paths';
 
-import * as profiles from './profiles';
+import profiles from './profiles';
 
-export function getProfiles(): string[] {
+export { getProfiles, setProfiles, create, migrate };
+export default { getProfiles, setProfiles, create, migrate };
+
+function getProfiles(): string[] {
 	const profilesFile = getProfilesFile();
 	return getJSON(profilesFile, () => []);
 }
 
-export function setProfiles(profiles: string[]): void {
+function setProfiles(profiles: string[]): void {
 	const profilesFile = getProfilesFile();
 	writeJSON(profilesFile, profiles);
 }
 
-export function create(profile: string): void {
+function create(profile: string): void {
 	if (!profile) {
 		error('Usage: `npm run create profile` where `profile` - is any profile name you want');
 	}
@@ -30,7 +33,7 @@ export function create(profile: string): void {
 	profiles.setProfiles(existingProfiles);
 }
 
-export function migrate(profile: string): void {
+function migrate(profile: string): void {
 	if (!profile) {
 		error('Usage: `npm run migrate profile` where `profile` - is any profile name you want');
 	}
