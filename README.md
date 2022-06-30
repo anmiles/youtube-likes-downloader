@@ -4,7 +4,7 @@ Downloads your liked videos onto local drive
 
 ----
 
-## IMPORTANT! Notes about migration from v1 to v2
+## IMPORTANT! Notes about migration to v3
 
 If you are going to clone this project first time, please skip this section.
 If you are going to fetch/pull/checkout this repository, please follow these steps:
