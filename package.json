@@ -2,16 +2,19 @@
 	"name": "youtube-likes-downloader",
 	"version": "2.0.3",
 	"description": "Downloads all liked videos",
-	"author": "Anatoliy Oblaukhov",
-	"license": "MIT",
 	"keywords": [
 		"youtube",
 		"download",
 		"likes"
 	],
-	"main": "dist/index.js",
-	"repository": "gitlab:anmiles/youtube-likes-downloader",
+	"author": "Anatoliy Oblaukhov",
 	"homepage": "https://gitlab.com/anmiles/youtube-likes-downloader",
+	"repository": "gitlab:anmiles/youtube-likes-downloader",
+	"license": "MIT",
+	"engines": {
+		"node": ">=12.22.1"
+	},
+	"main": "dist/index.js",
 	"scripts": {
 		"clean": "rimraf dist",
 		"build": "rimraf dist && tsc",
