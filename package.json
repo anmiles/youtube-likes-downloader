@@ -3,8 +3,15 @@
 	"version": "2.0.2",
 	"description": "Downloads all liked videos",
 	"author": "Anatoliy Oblaukhov",
-	"license": "ISC",
+	"license": "MIT",
+	"keywords": [
+		"youtube",
+		"download",
+		"likes"
+	],
 	"main": "dist/index.js",
+	"repository": "gitlab:anmiles/youtube-likes-downloader",
+	"homepage": "https://gitlab.com/anmiles/youtube-likes-downloader",
 	"scripts": {
 		"clean": "rimraf dist",
 		"build": "rimraf dist && tsc",
@@ -35,6 +42,7 @@
 		"eslint-plugin-jest": "^26.5.3",
 		"jest": "^28.1.2",
 		"nyc": "^15.1.0",
+		"rimraf": "^3.0.2",
 		"ts-jest": "^28.0.5",
 		"typescript": "^4.7.4"
 	}
