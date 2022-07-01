@@ -1,7 +1,4 @@
-default:
-  image: node:12.22.1
-  tags:
-    - cicd
+image: node:12.22.1
 
 stages:
   - setup
