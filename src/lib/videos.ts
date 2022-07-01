@@ -1,11 +1,12 @@
 import type GoogleApis from 'googleapis';
 import { getClient } from './auth';
 import { log } from './logger';
+import { sleep } from './sleep';
 
 import videos from './videos';
 
 export { getVideosString };
-export default { getVideosString, getData, formatVideo, sleep };
+export default { getVideosString, getData, formatVideo };
 
 type ItemsArgs = GoogleApis.youtube_v3.Params$Resource$Playlistitems$List;
 type ItemsAPI = GoogleApis.youtube_v3.Resource$Playlistitems;
@@ -32,7 +33,7 @@ async function getData(playlistItems: ItemsAPI, args: ItemsArgs): Promise<Item[]
 		log(`Getting video IDs (${items.length} of ${response.data.pageInfo?.totalResults || 'many'})...`);
 		pageToken = response.data.nextPageToken;
 
-		await videos.sleep(requestInterval);
+		await sleep(requestInterval);
 	} while (pageToken);
 
 	return items;
@@ -40,8 +41,4 @@ async function getData(playlistItems: ItemsAPI, args: ItemsArgs): Promise<Item[]
 
 function formatVideo(video: Item): string {
 	return [ `# ${video.snippet?.title || 'Unknown'}`, `https://www.youtube.com/watch?v=${video.snippet?.resourceId?.videoId || 'unknown'}` ].join('\n');
-}
-
-async function sleep(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
 }

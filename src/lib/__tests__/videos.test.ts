@@ -1,6 +1,7 @@
 import type GoogleApis from 'googleapis';
 import auth from '../auth';
 import logger from '../logger';
+import sleep from '../sleep';
 
 import videos from '../videos';
 const original = jest.requireActual('../videos').default as typeof videos;
@@ -8,7 +9,6 @@ jest.mock<typeof videos>('../videos', () => ({
 	getVideosString : jest.fn(),
 	getData         : jest.fn().mockImplementation(async () => videosList),
 	formatVideo     : jest.fn().mockImplementation((video) => video?.snippet?.title || 'none'),
-	sleep           : jest.fn(),
 }));
 
 jest.mock<Partial<typeof auth>>('../auth', () => ({
@@ -17,6 +17,10 @@ jest.mock<Partial<typeof auth>>('../auth', () => ({
 
 jest.mock<Partial<typeof logger>>('../logger', () => ({
 	log : jest.fn(),
+}));
+
+jest.mock<Partial<typeof sleep>>('../sleep', () => ({
+	sleep : jest.fn(),
 }));
 
 const profile = 'username';
@@ -109,8 +113,8 @@ describe('src/lib/videos', () => {
 		it('sleep after reach request', async () => {
 			await original.getData(playlistItems, itemsArgs);
 
-			expect(videos.sleep).toBeCalledTimes(responses.length);
-			expect(videos.sleep).toBeCalledWith(300);
+			expect(sleep.sleep).toBeCalledTimes(responses.length);
+			expect(sleep.sleep).toBeCalledWith(300);
 		});
 
 		it('should return items data', async () => {
@@ -139,16 +143,6 @@ describe('src/lib/videos', () => {
 		it('should properly format video without snippet', () => {
 			const result = original.formatVideo(videosList[3]);
 			expect(result).toEqual('# Unknown\nhttps://www.youtube.com/watch?v=unknown');
-		});
-	});
-
-	describe('sleep', () => {
-		it('should be resolved at least after milliseconds', async () => {
-			const delay  = 300;
-			const before = new Date().getTime();
-			await original.sleep(delay);
-			const after = new Date().getTime();
-			expect(after - before).toBeGreaterThanOrEqual(delay - 1);
 		});
 	});
 });
