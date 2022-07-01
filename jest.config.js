@@ -1,5 +1,7 @@
 module.exports = {
-	preset    : 'ts-jest',
+	preset     : 'ts-jest',
+	clearMocks : true,
+
 	roots     : [ '<rootDir>/src' ],
 	testMatch : [ '<rootDir>/src/**/__tests__/*.test.ts' ],
 	transform : {
@@ -20,12 +22,10 @@ module.exports = {
 		'!<rootDir>/output/**',
 		'!<rootDir>/secrets/**',
 	],
-	setupFilesAfterEnv : [ '<rootDir>/jest.setup.js' ],
 
 	globals : {
 		'ts-jest' : {
 			isolatedModules : true, // otherwise tests are slowing down a lot because of googleapis
 		},
 	},
-	maxWorkers : 1,
 };
