@@ -22,7 +22,7 @@ install:
   script:
     - npm ci
   only:
-    - {DEFAULT_BRANCH}
+    - master
     - merge_requests
 
 build:
@@ -41,7 +41,7 @@ build:
     paths:
       - dist/
   only:
-    - {DEFAULT_BRANCH}
+    - master
     - merge_requests
 
 lint:
@@ -57,7 +57,7 @@ lint:
   script:
     - npm run lint
   only:
-    - {DEFAULT_BRANCH}
+    - master
     - merge_requests
 
 test:
@@ -77,7 +77,7 @@ test:
   script:
     - npm run test:ci
   only:
-    - {DEFAULT_BRANCH}
+    - master
     - merge_requests
 
 coverage:
@@ -97,5 +97,5 @@ coverage:
   script:
     - npm run test:report:coverage
   only:
-    - {DEFAULT_BRANCH}
+    - master
     - merge_requests
