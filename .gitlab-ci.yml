@@ -1,4 +1,5 @@
-image: node:12.22.1
+default:
+  image: node:12.22.1
 
 stages:
   - setup
