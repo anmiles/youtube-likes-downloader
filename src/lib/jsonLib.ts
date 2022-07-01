@@ -1,5 +1,6 @@
 import fs from 'fs';
 import { error } from './logger';
+import { ensureFile } from './paths';
 
 import jsonLib from './jsonLib';
 
@@ -13,6 +14,7 @@ function getJSON<T>(filename: string, createCallback: () => Exclude<T, Promise<a
 
 	const json = createCallback();
 	jsonLib.checkJSON(filename, json);
+	ensureFile(filename);
 	jsonLib.writeJSON(filename, json);
 	return json;
 }

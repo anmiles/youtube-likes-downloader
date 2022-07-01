@@ -1,22 +1,23 @@
-import fs from 'fs';
 import { download } from './downloader';
-import { info } from './logger';
-import { getLikesFile } from './paths';
-import { getProfiles } from './profiles';
-import { getVideosString } from './videos';
+import { info, error } from './logger';
+import { restrictOldFiles, getProfiles } from './profiles';
+import { updateVideosData } from './videos';
 
 export { run };
 export default { run };
 
 async function run(): Promise<void> {
+	restrictOldFiles();
 	const profiles = getProfiles();
+
+	if (profiles.length === 0) {
+		error('Please `npm run create` at least one profile');
+	}
 
 	for (const profile of profiles) {
 		info(`Downloading ${profile}...`);
-		const likesFile    = getLikesFile(profile);
-		const videosString = await getVideosString(profile);
-		fs.writeFileSync(likesFile, videosString);
-		await download(profile, likesFile);
+		await updateVideosData(profile);
+		await download(profile);
 	}
 
 	info('Done!');

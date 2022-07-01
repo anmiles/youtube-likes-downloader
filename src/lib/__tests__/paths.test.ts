@@ -4,47 +4,46 @@ import path from 'path';
 import paths from '../paths';
 const original = jest.requireActual('../paths').default as typeof paths;
 jest.mock<typeof paths>('../paths', () => ({
-	getOutputDir       : jest.fn(),
-	getProfilesFile    : jest.fn(),
-	getDownloadArchive : jest.fn(),
-	getLikesFile       : jest.fn(),
-	getSecretsFile     : jest.fn(),
-	getCredentialsFile : jest.fn(),
+	getOutputDir       : jest.fn().mockImplementation(() => outputDir),
+	getDownloadArchive : jest.fn().mockImplementation(() => downloadArchive),
+	getLikesFile       : jest.fn().mockImplementation(() => likesFile),
+	getProfilesFile    : jest.fn().mockImplementation(() => profilesFile),
+	getSecretsFile     : jest.fn().mockImplementation(() => secretsFile),
+	getCredentialsFile : jest.fn().mockImplementation(() => credentialsFile),
+	ensureDir          : jest.fn().mockImplementation((dirPath) => dirPath),
+	ensureFile         : jest.fn().mockImplementation((filePath) => filePath),
 }));
 
 jest.mock<Partial<typeof fs>>('fs', () => ({
 	mkdirSync     : jest.fn(),
 	writeFileSync : jest.fn(),
-	existsSync    : jest.fn().mockImplementation(() => fileExists),
+	existsSync    : jest.fn().mockImplementation(() => exists),
 }));
 
 jest.mock<Partial<typeof path>>('path', () => ({
-	join : jest.fn().mockImplementation((...args) => args.join('/')),
+	join    : jest.fn().mockImplementation((...args) => args.join('/')),
+	dirname : jest.fn().mockImplementation((arg) => arg.split('/').slice(0, -1).join('/')),
 }));
 
-const profile         = 'username';
+const profile  = 'username';
+const dirPath  = 'dirPath';
+const filePath = 'parentDir/filePath';
+
 const outputDir       = 'output/username';
 const downloadArchive = 'input/username.ytdlp';
 const likesFile       = 'input/username.txt';
+const profilesFile    = 'input/profiles.json';
+const secretsFile     = 'secrets/username.json';
+const credentialsFile = 'secrets/username.credentials.json';
 
-let fileExists: boolean;
+let exists: boolean;
 
 describe('src/lib/paths', () => {
 	describe('getOutputDir', () => {
-		it('should create outputDir if not exists', () => {
-			fileExists = false;
-
+		it('should call ensureDir', () => {
 			original.getOutputDir(profile);
 
-			expect(fs.mkdirSync).toBeCalledWith(outputDir);
-		});
-
-		it('should not make outputDir if already exists', () => {
-			fileExists = true;
-
-			original.getOutputDir(profile);
-
-			expect(fs.mkdirSync).not.toBeCalled();
+			expect(paths.ensureDir).toBeCalledWith(outputDir);
 		});
 
 		it('should return outputDir', () => {
@@ -55,20 +54,10 @@ describe('src/lib/paths', () => {
 	});
 
 	describe('getDownloadArchive', () => {
-		it('should create empty downloadArchive if not exists', () => {
-			fileExists = false;
-
+		it('should call ensureFile', () => {
 			original.getDownloadArchive(profile);
 
-			expect(fs.writeFileSync).toBeCalledWith(downloadArchive, '');
-		});
-
-		it('should not make downloadArchive if already exists', () => {
-			fileExists = true;
-
-			original.getDownloadArchive(profile);
-
-			expect(fs.writeFileSync).not.toBeCalled();
+			expect(paths.ensureFile).toBeCalledWith(downloadArchive);
 		});
 
 		it('should return downloadArchive', () => {
@@ -79,20 +68,10 @@ describe('src/lib/paths', () => {
 	});
 
 	describe('getLikesFile', () => {
-		it('should create empty likesFile if not exists', () => {
-			fileExists = false;
-
+		it('should call ensureFile', () => {
 			original.getLikesFile(profile);
 
-			expect(fs.writeFileSync).toBeCalledWith(likesFile, '');
-		});
-
-		it('should not make likesFile if already exists', () => {
-			fileExists = true;
-
-			original.getLikesFile(profile);
-
-			expect(fs.writeFileSync).not.toBeCalled();
+			expect(paths.ensureFile).toBeCalledWith(likesFile);
 		});
 
 		it('should return likesFile', () => {
@@ -106,7 +85,79 @@ describe('src/lib/paths', () => {
 		it('should return profiles file', () => {
 			const result = original.getProfilesFile();
 
-			expect(result).toEqual('input/profiles.json');
+			expect(result).toEqual(profilesFile);
+		});
+	});
+
+	describe('getSecretsFile', () => {
+		it('should return secrets file', () => {
+			const result = original.getSecretsFile(profile);
+
+			expect(result).toEqual(secretsFile);
+		});
+	});
+
+	describe('getCredentialsFile', () => {
+		it('should return credentials file', () => {
+			const result = original.getCredentialsFile(profile);
+
+			expect(result).toEqual(credentialsFile);
+		});
+	});
+
+	describe('ensureDir', () => {
+		it('should create empty dir if not exists', () => {
+			exists = false;
+
+			original.ensureDir(dirPath);
+
+			expect(fs.mkdirSync).toBeCalledWith(dirPath, { recursive : true });
+		});
+
+		it('should not create empty dir if already exists', () => {
+			exists = true;
+
+			original.ensureDir(dirPath);
+
+			expect(fs.writeFileSync).not.toBeCalled();
+		});
+
+		it('should return dirPath', () => {
+			const result = original.ensureDir(dirPath);
+
+			expect(result).toEqual(dirPath);
+		});
+	});
+
+	describe('ensureFile', () => {
+		it('should ensure parent dir', () => {
+			exists = false;
+
+			original.ensureFile(filePath);
+
+			expect(paths.ensureDir).toBeCalledWith('parentDir');
+		});
+
+		it('should create empty file if not exists', () => {
+			exists = false;
+
+			original.ensureFile(filePath);
+
+			expect(fs.writeFileSync).toBeCalledWith(filePath, '');
+		});
+
+		it('should not create empty file if already exists', () => {
+			exists = true;
+
+			original.ensureFile(filePath);
+
+			expect(fs.writeFileSync).not.toBeCalled();
+		});
+
+		it('should return filePath', () => {
+			const result = original.ensureFile(filePath);
+
+			expect(result).toEqual(filePath);
 		});
 	});
 });

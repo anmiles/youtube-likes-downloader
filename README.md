@@ -4,12 +4,11 @@ Downloads your liked videos onto local drive
 
 ----
 
-## IMPORTANT! Notes about migration to v3
+## IMPORTANT! Migration to v3
 
-If you are going to clone this project first time, please skip this section.
-If you are going to fetch/pull/checkout this repository, please follow these steps:
+*You can skip this section if you clone the repository first time.*
 
-1. **If you have `output` file** - do nothing
+1. **If you have `output` file** - do nothing, it will be deleted
 1. **If you have `output` directory**:
     1. Rename `output` to `output2`
     1. Update repository to latest version
@@ -20,7 +19,7 @@ If you are going to fetch/pull/checkout this repository, please follow these ste
         - This will rename all profile files into appropriate ones.
         - The command will throw an error if destination files already exist.
         - The command will do nothing if you still didn't have any data
-    1. You can add more profiles, see [Adding profiles](#Adding%20profiles) below.
+    1. You can add more profiles, see [Adding profiles](#adding-profiles) below.
 
 ----
 
@@ -38,6 +37,7 @@ If you are going to fetch/pull/checkout this repository, please follow these ste
 1. Test everything
 `npm test`
 
+<a name="adding-profiles"></a>
 ## Adding profiles
 
 This application may work with multiple profiles (download videos liked from multiple youtube accounts).

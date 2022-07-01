@@ -1,14 +1,20 @@
+import fs from 'fs';
 import type GoogleApis from 'googleapis';
 import auth from '../auth';
 import logger from '../logger';
+import paths from '../paths';
 import sleep from '../sleep';
 
 import videos from '../videos';
 const original = jest.requireActual('../videos').default as typeof videos;
 jest.mock<typeof videos>('../videos', () => ({
-	getVideosString : jest.fn(),
-	getData         : jest.fn().mockImplementation(async () => videosList),
-	formatVideo     : jest.fn().mockImplementation((video) => video?.snippet?.title || 'none'),
+	updateVideosData : jest.fn(),
+	getData          : jest.fn().mockImplementation(async () => videosList),
+	formatVideo      : jest.fn().mockImplementation((video) => video?.snippet?.title || 'none'),
+}));
+
+jest.mock<Partial<typeof fs>>('fs', () => ({
+	writeFileSync : jest.fn(),
 }));
 
 jest.mock<Partial<typeof auth>>('../auth', () => ({
@@ -19,11 +25,16 @@ jest.mock<Partial<typeof logger>>('../logger', () => ({
 	log : jest.fn(),
 }));
 
+jest.mock<Partial<typeof paths>>('../paths', () => ({
+	getLikesFile : jest.fn().mockImplementation(() => likesFile),
+}));
+
 jest.mock<Partial<typeof sleep>>('../sleep', () => ({
 	sleep : jest.fn(),
 }));
 
-const profile = 'username';
+const profile   = 'username';
+const likesFile = 'likesFile';
 
 const videosList = [
 	{ snippet : { title : 'video1', resourceId : { videoId : 'video1Id' } } },
@@ -31,6 +42,8 @@ const videosList = [
 	{ snippet : { title : undefined, resourceId : undefined } },
 	{ snippet : undefined },
 ];
+
+const videosData = 'video1\n\nvideo2\n\nnone\n\nnone';
 
 const responses = [
 	[ videosList[0], videosList[1] ],
@@ -63,32 +76,32 @@ const playlistItems = {
 const itemsArgs = { playlistId : 'LL', part : [ 'snippet' ], maxResults : 50 };
 
 describe('src/lib/videos', () => {
-	describe('getVideosString', () => {
+	describe('updateVideosData', () => {
 		const formatVideoSpy = jest.spyOn(videos, 'formatVideo');
 
 		it('should get playlistItems API', async () => {
-			await original.getVideosString(profile);
+			await original.updateVideosData(profile);
 
 			expect(auth.getClient).toBeCalledWith(profile);
 		});
 
 		it('should get data from playlistItems API', async () => {
-			await original.getVideosString(profile);
+			await original.updateVideosData(profile);
 
 			expect(videos.getData).toBeCalledWith(playlistItems, itemsArgs);
 		});
 
 		it('should format each video', async () => {
-			await original.getVideosString(profile);
+			await original.updateVideosData(profile);
 
 			expect(formatVideoSpy).toBeCalledTimes(videosList.length);
 			videosList.forEach((video, index) => expect(formatVideoSpy.mock.calls[index][0]).toEqual(video));
 		});
 
-		it('should return videos list', async () => {
-			const videosList = await original.getVideosString(profile);
+		it('should write likes into file', async () => {
+			await original.updateVideosData(profile);
 
-			expect(videosList).toEqual('video1\n\nvideo2\n\nnone\n\nnone');
+			expect(fs.writeFileSync).toBeCalledWith(likesFile, videosData);
 		});
 	});
 

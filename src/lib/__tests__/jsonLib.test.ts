@@ -1,5 +1,6 @@
 import fs from 'fs';
 import logger from '../logger';
+import paths from '../paths';
 
 import jsonLib from '../jsonLib';
 const original = jest.requireActual('../jsonLib').default as typeof jsonLib;
@@ -21,6 +22,10 @@ jest.mock<Partial<typeof logger>>('../logger', () => ({
 	error : jest.fn().mockImplementation(() => {
 		throw mockError;
 	}),
+}));
+
+jest.mock<Partial<typeof paths>>('../paths', () => ({
+	ensureFile : jest.fn(),
 }));
 
 const filename     = 'filename';
@@ -83,6 +88,7 @@ describe('src/lib/jsonLib', () => {
 			original.getJSON(filename, createCallback);
 
 			expect(jsonLib.checkJSON).toBeCalledWith(filename, fallbackJSON);
+			expect(paths.ensureFile).toBeCalledWith(filename);
 			expect(jsonLib.writeJSON).toBeCalledWith(filename, fallbackJSON);
 		});
 

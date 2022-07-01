@@ -6,10 +6,11 @@ import paths from '../paths';
 import profiles from '../profiles';
 const original = jest.requireActual('../profiles').default as typeof profiles;
 jest.mock<typeof profiles>('../profiles', () => ({
-	getProfiles : jest.fn().mockImplementation(() => existingProfiles),
-	setProfiles : jest.fn(),
-	create      : jest.fn(),
-	migrate     : jest.fn(),
+	getProfiles      : jest.fn().mockImplementation(() => existingProfiles),
+	setProfiles      : jest.fn(),
+	restrictOldFiles : jest.fn(),
+	create           : jest.fn(),
+	migrate          : jest.fn(),
 }));
 
 jest.mock<Partial<typeof fs>>('fs', () => ({
@@ -85,6 +86,25 @@ describe('src/lib/profiles', () => {
 			expect(jsonLib.writeJSON).toBeCalledWith(profilesFile, allProfiles);
 		});
 	});
+
+	describe('restrictOldFiles', () => {
+		it('should throw if any of old files exist', () => {
+			existingFiles = [ './input/favorites.json', './secrets/username1.json' ];
+
+			const func = () => original.restrictOldFiles();
+
+			expect(func).toThrowError('Existing file ./input/favorites.json is not compatible with new multi-profile support, please perform migration (see README.md)');
+		});
+
+		it('should not throw if old files not detected', () => {
+			existingFiles = [ './secrets/username1.json' ];
+
+			const func = () => original.restrictOldFiles();
+
+			expect(func).not.toThrow();
+		});
+	});
+
 	describe('create', () => {
 		it('should output error and do nothing if profile is falsy', () => {
 			const func = () => original.create('');
@@ -128,16 +148,8 @@ describe('src/lib/profiles', () => {
 			expect(logger.error).toBeCalledWith('Usage: `npm run migrate profile` where `profile` - is any profile name you want');
 		});
 
-		it('should output error if destination file already exists', () => {
-			existingFiles = [ './input/favorites.json', './input/username3.txt' ];
-			const func    = () => original.migrate(migratingProfile);
-
-			expect(func).toThrowError(mockError);
-			expect(logger.error).toBeCalledWith(`Cannot move '${existingFiles[0]}' to '${existingFiles[1]}', probably data for profile '${migratingProfile}' already exists`);
-		});
-
 		it('should output error if nothing to migrate', () => {
-			existingFiles = [];
+			existingFiles = [ 'test.json' ];
 			const func    = () => original.migrate(migratingProfile);
 
 			expect(func).toThrowError(mockError);
@@ -161,6 +173,14 @@ describe('src/lib/profiles', () => {
 
 				expect(fs.renameSync).toBeCalledWith('./secrets/tokens.json', './secrets/username3.credentials.json');
 				expect(fs.renameSync).toBeCalledWith('./input/favorites.json', './input/username3.txt');
+			});
+
+			it('should not overwrite existing new files', () => {
+				existingFiles.push('./input/username3.txt');
+
+				func();
+
+				expect(fs.renameSync).toBeCalledWith('./secrets/tokens.json', './secrets/username3.credentials.json');
 			});
 
 			it('should output progress', () => {

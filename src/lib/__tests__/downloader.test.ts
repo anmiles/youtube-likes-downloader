@@ -1,8 +1,13 @@
+import fs from 'fs';
 import path from 'path';
 import execa from 'execa';
 import paths from '../paths';
 
 import downloader from '../downloader';
+
+jest.mock<Partial<typeof fs>>('fs', () => ({
+	writeFileSync : jest.fn(),
+}));
 
 jest.mock<Partial<typeof path>>('path', () => ({
 	resolve : jest.fn().mockImplementation((relativePath) => `/rootPath/${relativePath}`),
@@ -15,14 +20,12 @@ jest.mock('execa', () => jest.fn().mockImplementation(() => ({
 })));
 
 jest.mock<Partial<typeof paths>>('../paths', () => ({
-	getOutputDir       : jest.fn().mockImplementation(() => outputDir),
-	getDownloadArchive : jest.fn().mockImplementation(() => downloadArchive),
+	getLikesFile       : jest.fn().mockImplementation((profile) => `${profile}.txt`),
+	getOutputDir       : jest.fn().mockImplementation((profile) => `output/${profile}`),
+	getDownloadArchive : jest.fn().mockImplementation((profile) => `${profile}.ytdlp`),
 }));
 
-const profile         = 'username';
-const likesFile       = 'likesFile';
-const outputDir       = 'outputDir';
-const downloadArchive = 'downloadArchive';
+const profile = 'username';
 
 const pipe = jest.fn();
 let hasStdout: boolean;
@@ -33,24 +36,30 @@ describe('src/lib/downloader', () => {
 			hasStdout = true;
 		});
 
+		it('should get likes file', async () => {
+			await downloader.download(profile);
+
+			expect(paths.getLikesFile).toBeCalledWith(profile);
+		});
+
 		it('should get outputDir', async () => {
-			await downloader.download(profile, likesFile);
+			await downloader.download(profile);
 
 			expect(paths.getOutputDir).toBeCalledWith(profile);
 		});
 
 		it('should get downloadArchive', async () => {
-			await downloader.download(profile, likesFile);
+			await downloader.download(profile);
 
 			expect(paths.getDownloadArchive).toBeCalledWith(profile);
 		});
 
 		it('should call yt-dlp', async () => {
-			await downloader.download(profile, likesFile);
+			await downloader.download(profile);
 
 			expect(execa).toBeCalledWith('yt-dlp', [
-				'--batch-file', '/rootPath/likesFile',
-				'--download-archive', '/rootPath/downloadArchive',
+				'--batch-file', '/rootPath/username.txt',
+				'--download-archive', '/rootPath/username.ytdlp',
 				'--output', '%(title)s [%(channel)s]',
 				'--format-sort', 'vcodec:h264,acodec:mp3',
 				'--merge-output-format', 'mp4',
@@ -66,13 +75,13 @@ describe('src/lib/downloader', () => {
 				'--write-thumbnail',
 				'--write-description',
 				'--write-info-json',
-			], { cwd : outputDir });
+			], { cwd : 'output/username' });
 		});
 
 		it('should pipe yt-dlp stdout to process stdout if exists', async () => {
 			hasStdout = true;
 
-			await downloader.download(profile, likesFile);
+			await downloader.download(profile);
 
 			expect(pipe).toBeCalledWith(process.stdout);
 		});
@@ -80,7 +89,7 @@ describe('src/lib/downloader', () => {
 		it('should not pipe yt-dlp stdout if not exists', async () => {
 			hasStdout = false;
 
-			await downloader.download(profile, likesFile);
+			await downloader.download(profile);
 
 			expect(pipe).not.toBeCalledWith();
 		});
@@ -88,7 +97,7 @@ describe('src/lib/downloader', () => {
 		it('should return yt-dlp process', async () => {
 			hasStdout = true;
 
-			const proc = await downloader.download(profile, likesFile);
+			const proc = await downloader.download(profile);
 
 			expect(proc).toEqual({
 				stdout : { pipe },

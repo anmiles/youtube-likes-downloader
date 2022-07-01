@@ -1,12 +1,14 @@
+import fs from 'fs';
 import type GoogleApis from 'googleapis';
 import { getClient } from './auth';
 import { log } from './logger';
+import { getLikesFile } from './paths';
 import { sleep } from './sleep';
 
 import videos from './videos';
 
-export { getVideosString };
-export default { getVideosString, getData, formatVideo };
+export { updateVideosData };
+export default { updateVideosData, getData, formatVideo };
 
 type ItemsArgs = GoogleApis.youtube_v3.Params$Resource$Playlistitems$List;
 type ItemsAPI = GoogleApis.youtube_v3.Resource$Playlistitems;
@@ -15,11 +17,12 @@ type Item = GoogleApis.youtube_v3.Schema$PlaylistItem;
 
 const requestInterval = 300;
 
-async function getVideosString(profile: string): Promise<string> {
+async function updateVideosData(profile: string): Promise<void> {
 	const { playlistItems } = await getClient(profile);
 	const videosList        = await videos.getData(playlistItems, { playlistId : 'LL', part : [ 'snippet' ], maxResults : 50 });
-	const videosString      = videosList.map(videos.formatVideo).join('\n\n');
-	return videosString;
+	const videosData        = videosList.map(videos.formatVideo).join('\n\n');
+	const likesFile         = getLikesFile(profile);
+	fs.writeFileSync(likesFile, videosData);
 }
 
 async function getData(playlistItems: ItemsAPI, args: ItemsArgs): Promise<Item[]> {

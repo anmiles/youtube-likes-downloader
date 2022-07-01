@@ -5,8 +5,10 @@ import { getProfilesFile } from './paths';
 
 import profiles from './profiles';
 
-export { getProfiles, setProfiles, create, migrate };
-export default { getProfiles, setProfiles, create, migrate };
+export { getProfiles, setProfiles, create, migrate, restrictOldFiles };
+export default { getProfiles, setProfiles, create, migrate, restrictOldFiles };
+
+const oldFiles = [ './secrets/credentials.json', './secrets/tokens.json', './input/favorites.json', './input/.ytdlp' ] as const;
 
 function getProfiles(): string[] {
 	const profilesFile = getProfilesFile();
@@ -38,37 +40,33 @@ function migrate(profile: string): void {
 		error('Usage: `npm run migrate profile` where `profile` - is any profile name you want');
 	}
 
-	const renames = [
+	const renames: Array<{src: typeof oldFiles[number]; dst: string}> = [
 		{ src : './secrets/credentials.json', dst : `./secrets/${profile}.json` },
 		{ src : './secrets/tokens.json',	  dst : `./secrets/${profile}.credentials.json` },
 		{ src : './input/favorites.json',	  dst : `./input/${profile}.txt` },
 		{ src : './input/.ytdlp',			  dst : `./input/${profile}.ytdlp` },
 	];
 
-	let renamesCount = 0;
-
-	for (const rename of renames) {
-		if (fs.existsSync(rename.src)) {
-			if (fs.existsSync(rename.dst)) {
-				error(`Cannot move '${rename.src}' to '${rename.dst}', probably data for profile '${profile}' already exists`);
-			}
-
-			renamesCount++;
-		}
-	}
-
-	if (renamesCount === 0) {
+	if (renames.filter((rename) => fs.existsSync(rename.src)).length === 0) {
 		error('There are no files to migrate');
 	}
 
 	profiles.create(profile);
 
 	for (const rename of renames) {
-		if (fs.existsSync(rename.src)) {
+		if (fs.existsSync(rename.src) && !fs.existsSync(rename.dst)) {
 			log(`Moving '${rename.src}' to '${rename.dst}'...`);
 			fs.renameSync(rename.src, rename.dst);
 		}
 	}
 
 	warn(`Please move './output/' to './output/${profile}/' manually`);
+}
+
+function restrictOldFiles(): void {
+	for (const file of oldFiles) {
+		if (fs.existsSync(file)) {
+			throw `Existing file ${file} is not compatible with new multi-profile support, please perform migration (see README.md)`;
+		}
+	}
 }

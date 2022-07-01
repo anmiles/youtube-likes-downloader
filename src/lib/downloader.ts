@@ -1,6 +1,6 @@
 import path from 'path';
 import execa from 'execa';
-import { getOutputDir, getDownloadArchive } from './paths';
+import { getLikesFile, getOutputDir, getDownloadArchive } from './paths';
 
 export { download };
 export default { download };
@@ -25,7 +25,8 @@ const flags = [
 	'--write-info-json',
 ];
 
-async function download(profile: string, likesFile: string): Promise<execa.ExecaChildProcess<string>> {
+async function download(profile: string): Promise<execa.ExecaChildProcess<string>> {
+	const likesFile       = getLikesFile(profile);
 	const outputDir       = getOutputDir(profile);
 	const downloadArchive = getDownloadArchive(profile);
 

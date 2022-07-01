@@ -1,47 +1,52 @@
 import fs from 'fs';
 import path from 'path';
+import paths from './paths';
 
-export { getOutputDir, getDownloadArchive, getLikesFile, getProfilesFile, getSecretsFile, getCredentialsFile };
-export default { getOutputDir, getDownloadArchive, getLikesFile, getProfilesFile, getSecretsFile, getCredentialsFile };
+export { getOutputDir, getDownloadArchive, getLikesFile, getProfilesFile, getSecretsFile, getCredentialsFile, ensureDir, ensureFile };
+export default { getOutputDir, getDownloadArchive, getLikesFile, getProfilesFile, getSecretsFile, getCredentialsFile, ensureDir, ensureFile };
 
-const filePaths = {
+const dirPaths = {
 	input   : 'input',
 	output  : 'output',
 	secrets : 'secrets',
 };
 
 function getOutputDir(profile: string): string {
-	const outputDir = path.join(filePaths.output, profile);
-	if (!fs.existsSync(outputDir)) {
-		fs.mkdirSync(outputDir);
-	}
-	return outputDir;
+	return paths.ensureDir(path.join(dirPaths.output, profile));
 }
 
 function getDownloadArchive(profile: string): string {
-	const downloadArchive = path.join(filePaths.input, `${profile}.ytdlp`);
-	if (!fs.existsSync(downloadArchive)) {
-		fs.writeFileSync(downloadArchive, '');
-	}
-	return downloadArchive;
+	return paths.ensureFile(path.join(dirPaths.input, `${profile}.ytdlp`));
 }
 
 function getLikesFile(profile: string): string {
-	const likesFile = path.join(filePaths.input, `${profile}.txt`);
-	if (!fs.existsSync(likesFile)) {
-		fs.writeFileSync(likesFile, '');
-	}
-	return likesFile;
+	return paths.ensureFile(path.join(dirPaths.input, `${profile}.txt`));
 }
 
 function getProfilesFile() {
-	return path.join(filePaths.input, 'profiles.json');
+	return path.join(dirPaths.input, 'profiles.json');
 }
 
 function getSecretsFile(profile: string) {
-	return path.join(filePaths.secrets, `${profile}.json`);
+	return path.join(dirPaths.secrets, `${profile}.json`);
 }
 
 function getCredentialsFile(profile: string) {
-	return path.join(filePaths.secrets, `${profile}.credentials.json`);
+	return path.join(dirPaths.secrets, `${profile}.credentials.json`);
+}
+
+function ensureDir(dirPath: string) {
+	if (!fs.existsSync(dirPath)) {
+		fs.mkdirSync(dirPath, { recursive : true });
+	}
+	return dirPath;
+}
+
+function ensureFile(filePath: string) {
+	paths.ensureDir(path.dirname(filePath));
+
+	if (!fs.existsSync(filePath)) {
+		fs.writeFileSync(filePath, '');
+	}
+	return filePath;
 }
