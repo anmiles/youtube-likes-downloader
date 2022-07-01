@@ -22,8 +22,8 @@ install:
   script:
     - npm ci
   only:
-    refs:
-      - merge_requests
+    - {DEFAULT_BRANCH}
+    - merge_requests
 
 build:
   stage: build
@@ -41,8 +41,8 @@ build:
     paths:
       - dist/
   only:
-    refs:
-      - merge_requests
+    - {DEFAULT_BRANCH}
+    - merge_requests
 
 lint:
   stage: test
@@ -57,8 +57,8 @@ lint:
   script:
     - npm run lint
   only:
-    refs:
-      - merge_requests
+    - {DEFAULT_BRANCH}
+    - merge_requests
 
 test:
   stage: test
@@ -77,8 +77,8 @@ test:
   script:
     - npm run test:ci
   only:
-    refs:
-      - merge_requests
+    - {DEFAULT_BRANCH}
+    - merge_requests
 
 coverage:
   stage: coverage
@@ -97,5 +97,5 @@ coverage:
   script:
     - npm run test:report:coverage
   only:
-    refs:
-      - merge_requests
+    - {DEFAULT_BRANCH}
+    - merge_requests
