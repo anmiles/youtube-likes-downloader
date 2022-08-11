@@ -90,7 +90,7 @@ coverage:
       policy: pull
     - key: ${CI_COMMIT_REF_SLUG}_coverage
       paths:
-        -  coverage/**/*
+        - coverage/**/*
       policy: pull
   script:
     - npm run test:report:coverage

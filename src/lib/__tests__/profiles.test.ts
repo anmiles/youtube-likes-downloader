@@ -28,9 +28,9 @@ jest.mock<Partial<typeof jsonLib>>('../jsonLib', () => ({
 jest.mock<Partial<typeof logger>>('../logger', () => ({
 	log   : jest.fn(),
 	warn  : jest.fn(),
-	error : jest.fn().mockImplementation(() => {
-		throw mockError;
-	}),
+	error : jest.fn().mockImplementation((error) => {
+		throw error;
+	}) as jest.Mock<never, any>,
 }));
 
 jest.mock<Partial<typeof paths>>('../paths', () => ({
@@ -43,8 +43,6 @@ const profilesFile     = 'profilesFile';
 const profile1         = 'username1';
 const profile2         = 'username2';
 const allProfiles      = [ profile1, profile2 ];
-
-const mockError = 'mockError';
 
 let existingFiles: string[] = [];
 
@@ -109,8 +107,7 @@ describe('src/lib/profiles', () => {
 		it('should output error and do nothing if profile is falsy', () => {
 			const func = () => original.create('');
 
-			expect(func).toThrowError(mockError);
-			expect(logger.error).toBeCalledWith('Usage: `npm run create profile` where `profile` - is any profile name you want');
+			expect(func).toThrowError('Usage: `npm run create profile` where `profile` - is any profile name you want');
 		});
 
 		it('should get profiles', () => {
@@ -144,16 +141,14 @@ describe('src/lib/profiles', () => {
 		it('should output error if profile is falsy', () => {
 			const func = () => original.migrate('');
 
-			expect(func).toThrowError(mockError);
-			expect(logger.error).toBeCalledWith('Usage: `npm run migrate profile` where `profile` - is any profile name you want');
+			expect(func).toThrowError('Usage: `npm run migrate profile` where `profile` - is any profile name you want');
 		});
 
 		it('should output error if nothing to migrate', () => {
 			existingFiles = [ 'test.json' ];
 			const func    = () => original.migrate(migratingProfile);
 
-			expect(func).toThrowError(mockError);
-			expect(logger.error).toBeCalledWith('There are no files to migrate');
+			expect(func).toThrowError('There are no files to migrate');
 		});
 
 		describe('there are files to migrate', () => {

@@ -15,7 +15,7 @@ function warn(message: string): void {
 	console.warn(colorette.yellowBright(message));
 }
 
-function error(message: string): void {
+function error(message: string): never {
 	console.error(`${colorette.redBright(message)}\n`);
 	process.exit(1);
 }
