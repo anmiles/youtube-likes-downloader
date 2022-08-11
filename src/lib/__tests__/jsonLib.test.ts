@@ -19,9 +19,9 @@ jest.mock<Partial<typeof fs>>('fs', () => ({
 }));
 
 jest.mock<Partial<typeof logger>>('../logger', () => ({
-	error : jest.fn().mockImplementation(() => {
-		throw mockError;
-	}),
+	error : jest.fn().mockImplementation((error) => {
+		throw error;
+	}) as jest.Mock<never, any>,
 }));
 
 jest.mock<Partial<typeof paths>>('../paths', () => ({
@@ -32,8 +32,6 @@ const filename     = 'filename';
 const json         = { key : 'value' };
 const jsonString   = JSON.stringify(json, null, '    ');
 const fallbackJSON = { fallbackKey : 'fallbackValue' };
-
-const mockError = 'mockError';
 
 const createCallback      = jest.fn().mockReturnValue(fallbackJSON);
 const createCallbackAsync = jest.fn().mockResolvedValue(fallbackJSON);
@@ -161,9 +159,7 @@ describe('src/lib/jsonLib', () => {
 			expect(logger.error).not.toBeCalled();
 		});
 		it('should output error if json is falsy', () => {
-			expect(() => original.checkJSON(filename, '')).toThrowError(mockError);
-
-			expect(logger.error).toBeCalledWith(expect.stringContaining(filename));
+			expect(() => original.checkJSON(filename, '')).toThrowError(`File ${filename} doesn't exist and should be created with initial data, but function createCallback returned nothing`);
 		});
 	});
 });

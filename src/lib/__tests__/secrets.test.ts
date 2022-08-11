@@ -42,9 +42,9 @@ jest.mock<Partial<typeof jsonLib>>('../jsonLib', () => ({
 
 jest.mock<Partial<typeof logger>>('../logger', () => ({
 	info  : jest.fn(),
-	error : jest.fn().mockImplementation(() => {
-		throw mockError;
-	}),
+	error : jest.fn().mockImplementation((error) => {
+		throw error;
+	}) as jest.Mock<never, any>,
 }));
 
 const profile          = 'username1';
@@ -52,7 +52,6 @@ const secretsFile      = 'secrets/username1.json';
 const credentialsFile  = 'secrets/username1.credentials.json';
 const wrongRedirectURI = 'wrong_redirect_uri';
 
-const mockError    = 'mockError';
 const secretsError = 'secretsError';
 
 const secretsJSON: Secrets = {
@@ -118,8 +117,7 @@ describe('src/lib/secrets', () => {
 		it('should fallback to error', async () => {
 			await original.getSecrets(profile);
 
-			expect(getJSONSpy.mock.calls[0][1]).toThrowError(mockError);
-			expect(logger.error).toBeCalledWith(secretsError);
+			expect(getJSONSpy.mock.calls[0][1]).toThrowError(secretsError);
 		});
 
 		it('should check secrets', async () => {
@@ -285,8 +283,7 @@ describe('src/lib/secrets', () => {
 			wrongSecretsJSON.web.redirect_uris[0] = wrongRedirectURI;
 			const func                            = () => original.checkSecrets(profile, wrongSecretsJSON, secretsFile);
 
-			expect(func).toThrowError(mockError);
-			expect(logger.error).toBeCalledWith('Error in credentials file: redirect URI should be http://localhost:6006/oauthcallback.\nsecretsError');
+			expect(func).toThrowError('Error in credentials file: redirect URI should be http://localhost:6006/oauthcallback.\nsecretsError');
 		});
 	});
 
