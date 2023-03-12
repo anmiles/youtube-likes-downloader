@@ -1,3 +1,3 @@
 import { run } from './lib/app';
 
-run();
+run(process.argv[2]);

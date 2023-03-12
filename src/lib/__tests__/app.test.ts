@@ -1,6 +1,6 @@
+import googleApiWrapper from '@anmiles/google-api-wrapper';
 import downloader from '../downloader';
 import logger from '../logger';
-import profiles from '../profiles';
 import videos from '../videos';
 
 import app from '../app';
@@ -16,9 +16,8 @@ jest.mock<Partial<typeof logger>>('../logger', () => ({
 	}) as jest.Mock<never, any>,
 }));
 
-jest.mock<Partial<typeof profiles>>('../profiles', () => ({
-	getProfiles      : jest.fn().mockImplementation(() => existingProfiles),
-	restrictOldFiles : jest.fn(),
+jest.mock<Partial<typeof googleApiWrapper>>('@anmiles/google-api-wrapper', () => ({
+	getProfiles : jest.fn().mockImplementation(() => existingProfiles),
 }));
 
 jest.mock<Partial<typeof videos>>('../videos', () => ({
@@ -37,16 +36,10 @@ beforeEach(() => {
 
 describe('src/lib/app', () => {
 	describe('run', () => {
-		it('should restrict old files', async () => {
-			await app.run();
-
-			expect(profiles.restrictOldFiles).toBeCalled();
-		});
-
 		it('should get profiles', async () => {
 			await app.run();
 
-			expect(profiles.getProfiles).toBeCalled();
+			expect(googleApiWrapper.getProfiles).toBeCalled();
 		});
 
 		it('should output error if no profiles', async () => {
@@ -65,18 +58,32 @@ describe('src/lib/app', () => {
 			expect(logger.info).toBeCalledWith('Done!');
 		});
 
-		it('should update videos data for each profile', async () => {
+		it('should update videos data for all profiles', async () => {
 			await app.run();
 
 			expect(videos.updateVideosData).toBeCalledWith(profile1);
 			expect(videos.updateVideosData).toBeCalledWith(profile2);
 		});
 
-		it('should download videos for each profile', async () => {
+		it('should download videos for all profiles', async () => {
 			await app.run();
 
 			expect(downloader.download).toBeCalledWith(profile1);
 			expect(downloader.download).toBeCalledWith(profile2);
+		});
+
+		it('should update videos data only for specified profile', async () => {
+			await app.run(profile1);
+
+			expect(videos.updateVideosData).toBeCalledWith(profile1);
+			expect(videos.updateVideosData).not.toBeCalledWith(profile2);
+		});
+
+		it('should download videos only for specified profile', async () => {
+			await app.run(profile1);
+
+			expect(downloader.download).toBeCalledWith(profile1);
+			expect(downloader.download).not.toBeCalledWith(profile2);
 		});
 	});
 });

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0](../../tags/v4.0.0) - 2023-03-12
+
+### Changed
+- Moved common auth logic to [google-auth-wrapper](https://gitlab.com/anmiles/google-auth-wrapper)
+- Changed supported NodeJS version to >=18.14.2
+### Removed
+- Support of profiles migration
+
 ## [3.2.0](../../tags/v3.2.0) - 2022-07-01
 ### Added
 - Restrict old files: application will do nothing and ask to migrate old files if any

@@ -4,14 +4,11 @@ import path from 'path';
 import paths from '../paths';
 const original = jest.requireActual('../paths').default as typeof paths;
 jest.mock<typeof paths>('../paths', () => ({
+	ensureDir          : jest.fn().mockImplementation((dirPath) => dirPath),
+	ensureFile         : jest.fn().mockImplementation((filePath) => filePath),
 	getOutputDir       : jest.fn().mockImplementation(() => outputDir),
 	getDownloadArchive : jest.fn().mockImplementation(() => downloadArchive),
 	getLikesFile       : jest.fn().mockImplementation(() => likesFile),
-	getProfilesFile    : jest.fn().mockImplementation(() => profilesFile),
-	getSecretsFile     : jest.fn().mockImplementation(() => secretsFile),
-	getCredentialsFile : jest.fn().mockImplementation(() => credentialsFile),
-	ensureDir          : jest.fn().mockImplementation((dirPath) => dirPath),
-	ensureFile         : jest.fn().mockImplementation((filePath) => filePath),
 }));
 
 jest.mock<Partial<typeof fs>>('fs', () => ({
@@ -32,79 +29,10 @@ const filePath = 'parentDir/filePath';
 const outputDir       = 'output/username';
 const downloadArchive = 'input/username.ytdlp';
 const likesFile       = 'input/username.txt';
-const profilesFile    = 'input/profiles.json';
-const secretsFile     = 'secrets/username.json';
-const credentialsFile = 'secrets/username.credentials.json';
 
 let exists: boolean;
 
 describe('src/lib/paths', () => {
-	describe('getOutputDir', () => {
-		it('should call ensureDir', () => {
-			original.getOutputDir(profile);
-
-			expect(paths.ensureDir).toBeCalledWith(outputDir);
-		});
-
-		it('should return outputDir', () => {
-			const result = original.getOutputDir(profile);
-
-			expect(result).toEqual(outputDir);
-		});
-	});
-
-	describe('getDownloadArchive', () => {
-		it('should call ensureFile', () => {
-			original.getDownloadArchive(profile);
-
-			expect(paths.ensureFile).toBeCalledWith(downloadArchive);
-		});
-
-		it('should return downloadArchive', () => {
-			const result = original.getDownloadArchive(profile);
-
-			expect(result).toEqual(downloadArchive);
-		});
-	});
-
-	describe('getLikesFile', () => {
-		it('should call ensureFile', () => {
-			original.getLikesFile(profile);
-
-			expect(paths.ensureFile).toBeCalledWith(likesFile);
-		});
-
-		it('should return likesFile', () => {
-			const result = original.getLikesFile(profile);
-
-			expect(result).toEqual(likesFile);
-		});
-	});
-
-	describe('getProfilesFile', () => {
-		it('should return profiles file', () => {
-			const result = original.getProfilesFile();
-
-			expect(result).toEqual(profilesFile);
-		});
-	});
-
-	describe('getSecretsFile', () => {
-		it('should return secrets file', () => {
-			const result = original.getSecretsFile(profile);
-
-			expect(result).toEqual(secretsFile);
-		});
-	});
-
-	describe('getCredentialsFile', () => {
-		it('should return credentials file', () => {
-			const result = original.getCredentialsFile(profile);
-
-			expect(result).toEqual(credentialsFile);
-		});
-	});
-
 	describe('ensureDir', () => {
 		it('should create empty dir if not exists', () => {
 			exists = false;
@@ -158,6 +86,48 @@ describe('src/lib/paths', () => {
 			const result = original.ensureFile(filePath);
 
 			expect(result).toEqual(filePath);
+		});
+	});
+
+	describe('getOutputDir', () => {
+		it('should call ensureDir', () => {
+			original.getOutputDir(profile);
+
+			expect(paths.ensureDir).toBeCalledWith(outputDir);
+		});
+
+		it('should return outputDir', () => {
+			const result = original.getOutputDir(profile);
+
+			expect(result).toEqual(outputDir);
+		});
+	});
+
+	describe('getDownloadArchive', () => {
+		it('should call ensureFile', () => {
+			original.getDownloadArchive(profile);
+
+			expect(paths.ensureFile).toBeCalledWith(downloadArchive);
+		});
+
+		it('should return downloadArchive', () => {
+			const result = original.getDownloadArchive(profile);
+
+			expect(result).toEqual(downloadArchive);
+		});
+	});
+
+	describe('getLikesFile', () => {
+		it('should call ensureFile', () => {
+			original.getLikesFile(profile);
+
+			expect(paths.ensureFile).toBeCalledWith(likesFile);
+		});
+
+		it('should return likesFile', () => {
+			const result = original.getLikesFile(profile);
+
+			expect(result).toEqual(likesFile);
 		});
 	});
 });

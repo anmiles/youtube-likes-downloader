@@ -1,15 +1,12 @@
 import fs from 'fs';
-import type GoogleApis from 'googleapis';
-import auth from '../auth';
+import googleApiWrapper from '@anmiles/google-api-wrapper';
 import logger from '../logger';
 import paths from '../paths';
-import sleep from '../sleep';
 
 import videos from '../videos';
 const original = jest.requireActual('../videos').default as typeof videos;
 jest.mock<typeof videos>('../videos', () => ({
 	updateVideosData : jest.fn(),
-	getData          : jest.fn().mockImplementation(async () => videosList),
 	formatVideo      : jest.fn().mockImplementation((video) => video?.snippet?.title || 'none'),
 }));
 
@@ -17,8 +14,8 @@ jest.mock<Partial<typeof fs>>('fs', () => ({
 	writeFileSync : jest.fn(),
 }));
 
-jest.mock<Partial<typeof auth>>('../auth', () => ({
-	getClient : jest.fn().mockImplementation(async () => ({ playlistItems })),
+jest.mock<Partial<typeof googleApiWrapper>>('@anmiles/google-api-wrapper', () => ({
+	getVideos : jest.fn().mockImplementation(async () => videosList),
 }));
 
 jest.mock<Partial<typeof logger>>('../logger', () => ({
@@ -27,10 +24,6 @@ jest.mock<Partial<typeof logger>>('../logger', () => ({
 
 jest.mock<Partial<typeof paths>>('../paths', () => ({
 	getLikesFile : jest.fn().mockImplementation(() => likesFile),
-}));
-
-jest.mock<Partial<typeof sleep>>('../sleep', () => ({
-	sleep : jest.fn(),
 }));
 
 const profile   = 'username';
@@ -45,50 +38,16 @@ const videosList = [
 
 const videosData = 'video1\n\nvideo2\n\nnone\n\nnone';
 
-const responses = [
-	[ videosList[0], videosList[1] ],
-	null,
-	[ videosList[2], videosList[3] ],
-];
-
-const pageTokens = [
-	undefined,
-	'token1',
-	'token2',
-];
-
-const playlistItems = {
-	list : jest.fn().mockImplementation(async ({ pageToken }: {pageToken?: string}) => {
-		const index = pageTokens.indexOf(pageToken);
-
-		return {
-			data : {
-				items         : responses[index],
-				nextPageToken : pageTokens[index + 1],
-				pageInfo      : !responses[index] ? null : {
-					totalResults : videosList.length,
-				},
-			},
-		};
-	}),
-} as unknown as GoogleApis.youtube_v3.Resource$Playlistitems;
-
-const itemsArgs = { playlistId : 'LL', part : [ 'snippet' ], maxResults : 50 };
+const args = { playlistId : 'LL', part : [ 'snippet' ], maxResults : 50 };
 
 describe('src/lib/videos', () => {
 	describe('updateVideosData', () => {
 		const formatVideoSpy = jest.spyOn(videos, 'formatVideo');
 
-		it('should get playlistItems API', async () => {
-			await original.updateVideosData(profile);
-
-			expect(auth.getClient).toBeCalledWith(profile);
-		});
-
 		it('should get data from playlistItems API', async () => {
 			await original.updateVideosData(profile);
 
-			expect(videos.getData).toBeCalledWith(playlistItems, itemsArgs);
+			expect(googleApiWrapper.getVideos).toBeCalledWith(profile, args);
 		});
 
 		it('should format each video', async () => {
@@ -102,38 +61,6 @@ describe('src/lib/videos', () => {
 			await original.updateVideosData(profile);
 
 			expect(fs.writeFileSync).toBeCalledWith(likesFile, videosData);
-		});
-	});
-
-	describe('getData', () => {
-		it('should call playlistItems API for each page', async () => {
-			await original.getData(playlistItems, itemsArgs);
-
-			pageTokens.forEach((pageToken) => {
-				expect(playlistItems.list).toBeCalledWith({ ...itemsArgs, pageToken });
-			});
-		});
-
-		it('should output progress', async () => {
-			await original.getData(playlistItems, itemsArgs);
-
-			expect(logger.log).toBeCalledTimes(responses.length);
-			expect(logger.log).toBeCalledWith('Getting video IDs (2 of 4)...');
-			expect(logger.log).toBeCalledWith('Getting video IDs (2 of many)...');
-			expect(logger.log).toBeCalledWith('Getting video IDs (4 of 4)...');
-		});
-
-		it('sleep after reach request', async () => {
-			await original.getData(playlistItems, itemsArgs);
-
-			expect(sleep.sleep).toBeCalledTimes(responses.length);
-			expect(sleep.sleep).toBeCalledWith(300);
-		});
-
-		it('should return items data', async () => {
-			const items = await original.getData(playlistItems, itemsArgs);
-
-			expect(items).toEqual(videosList);
 		});
 	});
 

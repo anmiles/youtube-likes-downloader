@@ -1,3 +1,3 @@
-import { login } from './lib/auth';
+import { login } from '@anmiles/google-api-wrapper';
 
-login();
+login(process.argv[2]);

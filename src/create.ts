@@ -1,3 +1,3 @@
-import { create } from './lib/profiles.js';
+import { createProfile } from '@anmiles/google-api-wrapper';
 
-create(process.argv[2]);
+createProfile(process.argv[2]);
