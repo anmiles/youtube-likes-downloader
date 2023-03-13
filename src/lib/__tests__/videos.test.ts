@@ -1,5 +1,5 @@
 import fs from 'fs';
-import googleApiWrapper from '@anmiles/google-api-wrapper';
+import { youtube } from '@anmiles/google-api-wrapper';
 import logger from '../logger';
 import paths from '../paths';
 
@@ -14,8 +14,10 @@ jest.mock<Partial<typeof fs>>('fs', () => ({
 	writeFileSync : jest.fn(),
 }));
 
-jest.mock<Partial<typeof googleApiWrapper>>('@anmiles/google-api-wrapper', () => ({
-	getVideos : jest.fn().mockImplementation(async () => videosList),
+jest.mock<{ youtube: Partial<typeof youtube> }>('@anmiles/google-api-wrapper', () => ({
+	youtube : {
+		getPlaylistItems : jest.fn().mockImplementation(async () => playlistItems),
+	},
 }));
 
 jest.mock<Partial<typeof logger>>('../logger', () => ({
@@ -29,14 +31,14 @@ jest.mock<Partial<typeof paths>>('../paths', () => ({
 const profile   = 'username';
 const likesFile = 'likesFile';
 
-const videosList = [
-	{ snippet : { title : 'video1', resourceId : { videoId : 'video1Id' } } },
-	{ snippet : { title : 'video2', resourceId : { videoId : undefined } } },
-	{ snippet : { title : undefined, resourceId : undefined } },
-	{ snippet : undefined },
+const playlistItems: Array<{ id?: string | null | undefined, snippet?: { title?: string, resourceId?: { videoId?: string } } }> = [
+	{ id : 'id1', snippet : { title : 'video1', resourceId : { videoId : 'video1Id' } } },
+	{ id : null, snippet : { title : 'video2', resourceId : { videoId : undefined } } },
+	{ id : 'id3', snippet : { title : undefined, resourceId : undefined } },
+	{ id : 'id4', snippet : undefined },
 ];
 
-const videosData = 'video1\n\nvideo2\n\nnone\n\nnone';
+const result = 'video1\n\nvideo2\n\nnone\n\nnone';
 
 const args = { playlistId : 'LL', part : [ 'snippet' ], maxResults : 50 };
 
@@ -44,44 +46,44 @@ describe('src/lib/videos', () => {
 	describe('updateVideosData', () => {
 		const formatVideoSpy = jest.spyOn(videos, 'formatVideo');
 
-		it('should get data from playlistItems API', async () => {
+		it('should get data from playlistItems API and output progress', async () => {
 			await original.updateVideosData(profile);
 
-			expect(googleApiWrapper.getVideos).toBeCalledWith(profile, args);
+			expect(youtube.getPlaylistItems).toBeCalledWith(profile, args, { showProgress : true });
 		});
 
 		it('should format each video', async () => {
 			await original.updateVideosData(profile);
 
-			expect(formatVideoSpy).toBeCalledTimes(videosList.length);
-			videosList.forEach((video, index) => expect(formatVideoSpy.mock.calls[index][0]).toEqual(video));
+			expect(formatVideoSpy).toBeCalledTimes(playlistItems.length);
+			playlistItems.forEach((video, index) => expect(formatVideoSpy.mock.calls[index][0]).toEqual(video));
 		});
 
 		it('should write likes into file', async () => {
 			await original.updateVideosData(profile);
 
-			expect(fs.writeFileSync).toBeCalledWith(likesFile, videosData);
+			expect(fs.writeFileSync).toBeCalledWith(likesFile, result);
 		});
 	});
 
 	describe('formatVideo', () => {
 		it('should properly format video with existing fields', () => {
-			const result = original.formatVideo(videosList[0]);
+			const result = original.formatVideo(playlistItems[0]);
 			expect(result).toEqual('# video1\nhttps://www.youtube.com/watch?v=video1Id');
 		});
 
 		it('should properly format video without resourceId', () => {
-			const result = original.formatVideo(videosList[1]);
+			const result = original.formatVideo(playlistItems[1]);
 			expect(result).toEqual('# video2\nhttps://www.youtube.com/watch?v=unknown');
 		});
 
 		it('should properly format video without title and resourceId', () => {
-			const result = original.formatVideo(videosList[2]);
+			const result = original.formatVideo(playlistItems[2]);
 			expect(result).toEqual('# Unknown\nhttps://www.youtube.com/watch?v=unknown');
 		});
 
 		it('should properly format video without snippet', () => {
-			const result = original.formatVideo(videosList[3]);
+			const result = original.formatVideo(playlistItems[3]);
 			expect(result).toEqual('# Unknown\nhttps://www.youtube.com/watch?v=unknown');
 		});
 	});
