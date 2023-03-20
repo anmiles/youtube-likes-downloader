@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { youtube } from '@anmiles/google-api-wrapper';
+import { getYoutubeAPI, getItems } from '@anmiles/google-api-wrapper';
 import logger from '../logger';
 import paths from '../paths';
 
@@ -14,10 +14,13 @@ jest.mock<Partial<typeof fs>>('fs', () => ({
 	writeFileSync : jest.fn(),
 }));
 
-jest.mock<{ youtube: Partial<typeof youtube> }>('@anmiles/google-api-wrapper', () => ({
-	youtube : {
-		getPlaylistItems : jest.fn().mockImplementation(async () => playlistItems),
-	},
+jest.mock('@anmiles/google-api-wrapper', () => ({
+	getYoutubeAPI : jest.fn().mockImplementation(async () => api),
+	getItems      : jest.fn().mockImplementation(async (itemsAPI: string) => {
+		switch (itemsAPI) {
+			case api.playlistItems: return playlistItems;
+		}
+	}),
 }));
 
 jest.mock<Partial<typeof logger>>('../logger', () => ({
@@ -30,6 +33,10 @@ jest.mock<Partial<typeof paths>>('../paths', () => ({
 
 const profile   = 'username';
 const likesFile = 'likesFile';
+
+const api = {
+	playlistItems : 'playlistItems',
+};
 
 const playlistItems: Array<{ id?: string | null | undefined, snippet?: { title?: string, resourceId?: { videoId?: string } } }> = [
 	{ id : 'id1', snippet : { title : 'video1', resourceId : { videoId : 'video1Id' } } },
@@ -46,10 +53,16 @@ describe('src/lib/videos', () => {
 	describe('updateVideosData', () => {
 		const formatVideoSpy = jest.spyOn(videos, 'formatVideo');
 
+		it('should get youtube API with persistence', async () => {
+			await original.updateVideosData(profile);
+
+			expect(getYoutubeAPI).toBeCalledWith(profile);
+		});
+
 		it('should get data from playlistItems API and output progress', async () => {
 			await original.updateVideosData(profile);
 
-			expect(youtube.getPlaylistItems).toBeCalledWith(profile, args, { showProgress : true });
+			expect(getItems).toBeCalledWith(api.playlistItems, args);
 		});
 
 		it('should format each video', async () => {
