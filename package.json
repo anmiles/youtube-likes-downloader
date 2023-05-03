@@ -30,7 +30,7 @@
     "login": "node ./dist/login.js"
   },
   "dependencies": {
-    "@anmiles/google-api-wrapper": "^7.0.4",
+    "@anmiles/google-api-wrapper": "^7.0.6",
     "colorette": "^2.0.19",
     "execa": "^5.1.1",
     "googleapis": "^104.0.0"
