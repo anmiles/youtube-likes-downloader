@@ -5,7 +5,9 @@ module.exports = {
 	roots     : [ '<rootDir>/src' ],
 	testMatch : [ '<rootDir>/src/**/__tests__/*.test.ts' ],
 	transform : {
-		'^.+\\.ts$' : 'ts-jest',
+		'^.+\\.ts$' : [ 'ts-jest', {
+			isolatedModules : true, // otherwise tests are slowing down a lot because of googleapis
+		} ],
 	},
 	collectCoverageFrom : [
 		'<rootDir>/src/**/*.ts',
@@ -22,10 +24,4 @@ module.exports = {
 		'!<rootDir>/output/**',
 		'!<rootDir>/secrets/**',
 	],
-
-	globals : {
-		'ts-jest' : {
-			isolatedModules : true, // otherwise tests are slowing down a lot because of googleapis
-		},
-	},
 };
