@@ -30,7 +30,9 @@
     "login": "node ./dist/login.js"
   },
   "dependencies": {
+    "@anmiles/google-api-wrapper": "^8.0.1",
     "@anmiles/logger": "^2.1.2",
+    "@anmiles/prototypes": "^2.0.0",
     "execa": "^5.1.1",
     "googleapis": "^118.0.0"
   },
