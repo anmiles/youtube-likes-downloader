@@ -93,7 +93,7 @@ describe('src/lib/paths', () => {
 		it('should call ensureDir', () => {
 			original.getOutputDir(profile);
 
-			expect(paths.ensureDir).toBeCalledWith(outputDir);
+			expect(ensureDirSpy).toHaveBeenCalledWith(outputDir);
 		});
 
 		it('should return outputDir', () => {
@@ -107,7 +107,7 @@ describe('src/lib/paths', () => {
 		it('should call ensureFile', () => {
 			original.getDownloadArchive(profile);
 
-			expect(paths.ensureFile).toBeCalledWith(downloadArchive);
+			expect(ensureFileSpy).toHaveBeenCalledWith(downloadArchive);
 		});
 
 		it('should return downloadArchive', () => {
@@ -121,7 +121,7 @@ describe('src/lib/paths', () => {
 		it('should call ensureFile', () => {
 			original.getLikesFile(profile);
 
-			expect(paths.ensureFile).toBeCalledWith(likesFile);
+			expect(ensureFileSpy).toHaveBeenCalledWith(likesFile);
 		});
 
 		it('should return likesFile', () => {

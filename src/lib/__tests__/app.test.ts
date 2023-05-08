@@ -39,7 +39,7 @@ describe('src/lib/app', () => {
 		it('should get profiles', async () => {
 			await app.run();
 
-			expect(googleApiWrapper.getProfiles).toBeCalled();
+			expect(googleApiWrapper.getProfiles).toHaveBeenCalled();
 		});
 
 		it('should output error if no profiles', async () => {
@@ -53,37 +53,37 @@ describe('src/lib/app', () => {
 		it('should output info', async () => {
 			await app.run();
 
-			expect(logger.info).toBeCalledWith(`Downloading ${profile1}...`);
-			expect(logger.info).toBeCalledWith(`Downloading ${profile2}...`);
-			expect(logger.info).toBeCalledWith('Done!');
+			expect(logger.info).toHaveBeenCalledWith(`Downloading ${profile1}...`);
+			expect(logger.info).toHaveBeenCalledWith(`Downloading ${profile2}...`);
+			expect(logger.info).toHaveBeenCalledWith('Done!');
 		});
 
 		it('should update videos data for all profiles', async () => {
 			await app.run();
 
-			expect(videos.updateVideosData).toBeCalledWith(profile1);
-			expect(videos.updateVideosData).toBeCalledWith(profile2);
+			expect(videos.updateVideosData).toHaveBeenCalledWith(profile1);
+			expect(videos.updateVideosData).toHaveBeenCalledWith(profile2);
 		});
 
 		it('should download videos for all profiles', async () => {
 			await app.run();
 
-			expect(downloader.download).toBeCalledWith(profile1);
-			expect(downloader.download).toBeCalledWith(profile2);
+			expect(downloader.download).toHaveBeenCalledWith(profile1);
+			expect(downloader.download).toHaveBeenCalledWith(profile2);
 		});
 
 		it('should update videos data only for specified profile', async () => {
 			await app.run(profile1);
 
-			expect(videos.updateVideosData).toBeCalledWith(profile1);
-			expect(videos.updateVideosData).not.toBeCalledWith(profile2);
+			expect(videos.updateVideosData).toHaveBeenCalledWith(profile1);
+			expect(videos.updateVideosData).not.toHaveBeenCalledWith(profile2);
 		});
 
 		it('should download videos only for specified profile', async () => {
 			await app.run(profile1);
 
-			expect(downloader.download).toBeCalledWith(profile1);
-			expect(downloader.download).not.toBeCalledWith(profile2);
+			expect(downloader.download).toHaveBeenCalledWith(profile1);
+			expect(downloader.download).not.toHaveBeenCalledWith(profile2);
 		});
 	});
 });

@@ -39,25 +39,25 @@ describe('src/lib/downloader', () => {
 		it('should get likes file', async () => {
 			await downloader.download(profile);
 
-			expect(paths.getLikesFile).toBeCalledWith(profile);
+			expect(paths.getLikesFile).toHaveBeenCalledWith(profile);
 		});
 
 		it('should get outputDir', async () => {
 			await downloader.download(profile);
 
-			expect(paths.getOutputDir).toBeCalledWith(profile);
+			expect(paths.getOutputDir).toHaveBeenCalledWith(profile);
 		});
 
 		it('should get downloadArchive', async () => {
 			await downloader.download(profile);
 
-			expect(paths.getDownloadArchive).toBeCalledWith(profile);
+			expect(paths.getDownloadArchive).toHaveBeenCalledWith(profile);
 		});
 
 		it('should call yt-dlp', async () => {
 			await downloader.download(profile);
 
-			expect(execa).toBeCalledWith('yt-dlp', [
+			expect(execa).toHaveBeenCalledWith('yt-dlp', [
 				'--batch-file', '/rootPath/username.txt',
 				'--download-archive', '/rootPath/username.ytdlp',
 				'--output', '%(title)s [%(channel)s]',
@@ -83,7 +83,7 @@ describe('src/lib/downloader', () => {
 
 			await downloader.download(profile);
 
-			expect(pipe).toBeCalledWith(process.stdout);
+			expect(pipe).toHaveBeenCalledWith(process.stdout);
 		});
 
 		it('should not pipe yt-dlp stdout if not exists', async () => {
@@ -91,7 +91,7 @@ describe('src/lib/downloader', () => {
 
 			await downloader.download(profile);
 
-			expect(pipe).not.toBeCalledWith();
+			expect(pipe).not.toHaveBeenCalledWith();
 		});
 
 		it('should return yt-dlp process', async () => {

@@ -56,26 +56,26 @@ describe('src/lib/videos', () => {
 		it('should get youtube API with persistence', async () => {
 			await original.updateVideosData(profile);
 
-			expect(getYoutubeAPI).toBeCalledWith(profile);
+			expect(getYoutubeAPI).toHaveBeenCalledWith(profile);
 		});
 
 		it('should get data from playlistItems API and output progress', async () => {
 			await original.updateVideosData(profile);
 
-			expect(getItems).toBeCalledWith(api.playlistItems, args);
+			expect(getItems).toHaveBeenCalledWith(api.playlistItems, args);
 		});
 
 		it('should format each video', async () => {
 			await original.updateVideosData(profile);
 
-			expect(formatVideoSpy).toBeCalledTimes(playlistItems.length);
+			expect(formatVideoSpy).toHaveBeenCalledTimes(playlistItems.length);
 			playlistItems.forEach((video, index) => expect(formatVideoSpy.mock.calls[index][0]).toEqual(video));
 		});
 
 		it('should write likes into file', async () => {
 			await original.updateVideosData(profile);
 
-			expect(fs.writeFileSync).toBeCalledWith(likesFile, result);
+			expect(fs.writeFileSync).toHaveBeenCalledWith(likesFile, result);
 		});
 	});
 
