@@ -1,6 +1,6 @@
 import googleApiWrapper from '@anmiles/google-api-wrapper';
+import logger from '@anmiles/logger';
 import downloader from '../downloader';
-import logger from '../logger';
 import videos from '../videos';
 
 import app from '../app';
@@ -9,11 +9,8 @@ jest.mock<Partial<typeof downloader>>('../downloader', () => ({
 	download : jest.fn(),
 }));
 
-jest.mock<Partial<typeof logger>>('../logger', () => ({
-	info  : jest.fn(),
-	error : jest.fn().mockImplementation((error) => {
-		throw error;
-	}) as jest.Mock<never, any>,
+jest.mock<Partial<typeof logger>>('@anmiles/logger', () => ({
+	info : jest.fn(),
 }));
 
 jest.mock<Partial<typeof googleApiWrapper>>('@anmiles/google-api-wrapper', () => ({

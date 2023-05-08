@@ -1,7 +1,7 @@
 {
   "name": "youtube-likes-downloader",
   "version": "4.1.4",
-  "description": "Downloads all liked videos",
+  "description": "Download all liked videos from youtube",
   "keywords": [
     "youtube",
     "download",
@@ -30,8 +30,7 @@
     "login": "node ./dist/login.js"
   },
   "dependencies": {
-    "@anmiles/google-api-wrapper": "^7.0.6",
-    "colorette": "^2.0.19",
+    "@anmiles/logger": "^2.1.2",
     "execa": "^5.1.1",
     "googleapis": "^118.0.0"
   },

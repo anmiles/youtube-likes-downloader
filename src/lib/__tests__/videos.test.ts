@@ -1,6 +1,5 @@
 import fs from 'fs';
 import { getYoutubeAPI, getItems } from '@anmiles/google-api-wrapper';
-import logger from '../logger';
 import paths from '../paths';
 
 import videos from '../videos';
@@ -21,10 +20,6 @@ jest.mock('@anmiles/google-api-wrapper', () => ({
 			case api.playlistItems: return playlistItems;
 		}
 	}),
-}));
-
-jest.mock<Partial<typeof logger>>('../logger', () => ({
-	log : jest.fn(),
 }));
 
 jest.mock<Partial<typeof paths>>('../paths', () => ({

@@ -1,6 +1,6 @@
 # youtube-likes-downloader
 
-Downloads your liked videos onto local drive
+Download all liked videos from youtube
 
 ----
 
