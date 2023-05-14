@@ -8,6 +8,7 @@ module.exports = {
 		'coverage/',
 		'dist/',
 		'input/',
+		'output/',
 		'secrets/',
 	],
 };
