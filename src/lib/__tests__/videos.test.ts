@@ -1,5 +1,4 @@
 import fs from 'fs';
-import { getYoutubeAPI, getItems } from '@anmiles/google-api-wrapper';
 import paths from '../paths';
 
 import videos from '../videos';
@@ -14,12 +13,7 @@ jest.mock<Partial<typeof fs>>('fs', () => ({
 }));
 
 jest.mock('@anmiles/google-api-wrapper', () => ({
-	getYoutubeAPI : jest.fn().mockImplementation(async () => api),
-	getItems      : jest.fn().mockImplementation(async (itemsAPI: string) => {
-		switch (itemsAPI) {
-			case api.playlistItems: return playlistItems;
-		}
-	}),
+	getAPI : jest.fn().mockImplementation((...args) => getAPI(...args)),
 }));
 
 jest.mock<Partial<typeof paths>>('../paths', () => ({
@@ -29,9 +23,9 @@ jest.mock<Partial<typeof paths>>('../paths', () => ({
 const profile   = 'username';
 const likesFile = 'likesFile';
 
-const api = {
+const apis = {
 	playlistItems : 'playlistItems',
-};
+} as const;
 
 const playlistItems: Array<{ id?: string | null | undefined, snippet?: { title?: string, resourceId?: { videoId?: string } } }> = [
 	{ id : 'id1', snippet : { title : 'video1', resourceId : { videoId : 'video1Id' } } },
@@ -44,20 +38,31 @@ const result = 'video1\n\nvideo2\n\nnone\n\nnone';
 
 const args = { playlistId : 'LL', part : [ 'snippet' ], maxResults : 50 };
 
+const getItems = jest.fn().mockImplementation(async (selectAPI: (api: typeof apis) => typeof apis[keyof typeof apis]) => {
+	switch (selectAPI(apis)) {
+		case apis.playlistItems: return playlistItems;
+	}
+});
+
+const getAPI = jest.fn().mockImplementation(async () => ({
+	getItems,
+}));
+
 describe('src/lib/videos', () => {
 	describe('updateVideosData', () => {
 		const formatVideoSpy = jest.spyOn(videos, 'formatVideo');
 
-		it('should get youtube API with persistence', async () => {
+		it('should get youtube API', async () => {
 			await original.updateVideosData(profile);
 
-			expect(getYoutubeAPI).toHaveBeenCalledWith(profile);
+			expect(getAPI).toHaveBeenCalledWith('youtube', profile);
 		});
 
-		it('should get data from playlistItems API and output progress', async () => {
+		it('should get data from playlistItems API', async () => {
 			await original.updateVideosData(profile);
 
-			expect(getItems).toHaveBeenCalledWith(api.playlistItems, args);
+			expect(getItems.mock.calls[0][0](apis)).toEqual(apis.playlistItems);
+			expect(getItems.mock.calls[0][1]).toEqual(args);
 		});
 
 		it('should format each video', async () => {
