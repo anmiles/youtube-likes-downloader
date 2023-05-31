@@ -1,5 +1,6 @@
 import fs from 'fs';
 import paths from '../paths';
+import '../../types/jest';
 
 import videos from '../videos';
 const original = jest.requireActual('../videos').default as typeof videos;
@@ -61,8 +62,7 @@ describe('src/lib/videos', () => {
 		it('should get data from playlistItems API', async () => {
 			await original.updateVideosData(profile);
 
-			expect(getItems.mock.calls[0][0](apis)).toEqual(apis.playlistItems);
-			expect(getItems.mock.calls[0][1]).toEqual(args);
+			expect(getItems).toHaveBeenCalledWith(expect.function([ apis ], apis.playlistItems), args);
 		});
 
 		it('should format each video', async () => {
