@@ -26,6 +26,7 @@
     "test:watch:coverage": "npm test -- --watch --coverage",
     "test:report:coverage": "nyc report --nycrc-path ./coverage.config.js -t ./coverage --report-dir ./coverage",
     "start": "node ./dist/index.js",
+    "update": "node ./dist/update.js",
     "create": "node ./dist/create.js",
     "login": "node ./dist/login.js"
   },

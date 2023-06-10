@@ -18,7 +18,8 @@ jest.mock<Partial<typeof googleApiWrapper>>('@anmiles/google-api-wrapper', () =>
 }));
 
 jest.mock<Partial<typeof videos>>('../videos', () => ({
-	updateVideosData : jest.fn().mockImplementation(async () => videosData),
+	importLikes : jest.fn().mockImplementation(async () => videosData),
+	exportLikes : jest.fn().mockImplementation(),
 }));
 
 const profile1   = 'username1';
@@ -50,16 +51,20 @@ describe('src/lib/app', () => {
 		it('should output info', async () => {
 			await app.run();
 
-			expect(logger.info).toHaveBeenCalledWith(`Downloading ${profile1}...`);
-			expect(logger.info).toHaveBeenCalledWith(`Downloading ${profile2}...`);
+			expect(logger.info).toHaveBeenCalledWith(`Importing likes from ${profile1}...`);
+			expect(logger.info).toHaveBeenCalledWith(`Downloading videos from ${profile1}...`);
+
+			expect(logger.info).toHaveBeenCalledWith(`Importing likes from ${profile2}...`);
+			expect(logger.info).toHaveBeenCalledWith(`Downloading videos from ${profile2}...`);
+
 			expect(logger.info).toHaveBeenCalledWith('Done!');
 		});
 
 		it('should update videos data for all profiles', async () => {
 			await app.run();
 
-			expect(videos.updateVideosData).toHaveBeenCalledWith(profile1);
-			expect(videos.updateVideosData).toHaveBeenCalledWith(profile2);
+			expect(videos.importLikes).toHaveBeenCalledWith(profile1);
+			expect(videos.importLikes).toHaveBeenCalledWith(profile2);
 		});
 
 		it('should download videos for all profiles', async () => {
@@ -72,8 +77,8 @@ describe('src/lib/app', () => {
 		it('should update videos data only for specified profile', async () => {
 			await app.run(profile1);
 
-			expect(videos.updateVideosData).toHaveBeenCalledWith(profile1);
-			expect(videos.updateVideosData).not.toHaveBeenCalledWith(profile2);
+			expect(videos.importLikes).toHaveBeenCalledWith(profile1);
+			expect(videos.importLikes).not.toHaveBeenCalledWith(profile2);
 		});
 
 		it('should download videos only for specified profile', async () => {
@@ -81,6 +86,44 @@ describe('src/lib/app', () => {
 
 			expect(downloader.download).toHaveBeenCalledWith(profile1);
 			expect(downloader.download).not.toHaveBeenCalledWith(profile2);
+		});
+	});
+
+	describe('update', () => {
+		it('should get profiles', async () => {
+			await app.update();
+
+			expect(googleApiWrapper.getProfiles).toHaveBeenCalled();
+		});
+
+		it('should output error if no profiles', async () => {
+			existingProfiles = [];
+
+			const func = () => app.update();
+
+			await expect(func).rejects.toEqual('Please `npm run create` at least one profile');
+		});
+
+		it('should output info', async () => {
+			await app.update();
+
+			expect(logger.info).toHaveBeenCalledWith(`Exporting likes into ${profile1}...`);
+			expect(logger.info).toHaveBeenCalledWith(`Exporting likes into ${profile2}...`);
+			expect(logger.info).toHaveBeenCalledWith('Done!');
+		});
+
+		it('should export likes for all profiles', async () => {
+			await app.update();
+
+			expect(videos.exportLikes).toHaveBeenCalledWith(profile1);
+			expect(videos.exportLikes).toHaveBeenCalledWith(profile2);
+		});
+
+		it('should export likes only for specified profile', async () => {
+			await app.update(profile1);
+
+			expect(videos.exportLikes).toHaveBeenCalledWith(profile1);
+			expect(videos.exportLikes).not.toHaveBeenCalledWith(profile2);
 		});
 	});
 });

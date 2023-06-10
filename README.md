@@ -42,3 +42,15 @@ This will never re-download already download ones, just add newly liked ones.
     - Schedule task that will run `npm start` periodically
 1. Manual download
     - Run `npm start` manually. If needed, it will interact with you to retrieve credentials if you still didn't run `npm run login` in advance
+
+## Updating
+
+`npm run update` to update likes playlist with videos from likes file
+`npm run update <profile>` will update likes playlist for selected profile
+
+Likes are being exported in reversed order because likes playlist is ordered "newest first".
+This will never remove redundant likes, only like videos that are still not liked but contained in likes file.
+This might be useful for copying likes from one profile to another:
+  - run `npm start <profile1>` to get likes imported from selected profile
+  - copy likes file to another profile
+  - run `npm run update <profile2>` to export likes into another profile
