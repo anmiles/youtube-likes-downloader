@@ -5,9 +5,10 @@ import '@anmiles/prototypes';
 import paths from '../paths';
 const original = jest.requireActual('../paths').default as typeof paths;
 jest.mock<typeof paths>('../paths', () => ({
-	getOutputDir       : jest.fn().mockImplementation(() => outputDir),
-	getDownloadArchive : jest.fn().mockImplementation(() => downloadArchive),
-	getLikesFile       : jest.fn().mockImplementation(() => likesFile),
+	getOutputDir        : jest.fn().mockImplementation(() => outputDir),
+	getDownloadArchive  : jest.fn().mockImplementation(() => downloadArchive),
+	getLikesFile        : jest.fn().mockImplementation(() => likesFile),
+	getIncludeLikesFile : jest.fn().mockImplementation(() => includeLikesFile),
 }));
 
 jest.mock<Partial<typeof fs>>('fs', () => ({
@@ -24,10 +25,11 @@ jest.mock<Partial<typeof path>>('path', () => ({
 const ensureDirSpy  = jest.spyOn(fs, 'ensureDir').mockImplementation((dirPath) => dirPath);
 const ensureFileSpy = jest.spyOn(fs, 'ensureFile').mockImplementation((filePath) => filePath);
 
-const profile         = 'username';
-const outputDir       = 'output/username';
-const downloadArchive = 'input/username.ytdlp';
-const likesFile       = 'input/username.txt';
+const profile          = 'username';
+const outputDir        = 'output/username';
+const downloadArchive  = 'input/username.ytdlp';
+const likesFile        = 'input/username.txt';
+const includeLikesFile = 'input/username.include.txt';
 
 let exists: boolean;
 
@@ -71,6 +73,20 @@ describe('src/lib/paths', () => {
 			const result = original.getLikesFile(profile);
 
 			expect(result).toEqual(likesFile);
+		});
+	});
+
+	describe('getIncludeLikesFile', () => {
+		it('should call ensureFile', () => {
+			original.getIncludeLikesFile(profile);
+
+			expect(ensureFileSpy).toHaveBeenCalledWith(includeLikesFile);
+		});
+
+		it('should return includeLikesFile', () => {
+			const result = original.getIncludeLikesFile(profile);
+
+			expect(result).toEqual(includeLikesFile);
 		});
 	});
 });

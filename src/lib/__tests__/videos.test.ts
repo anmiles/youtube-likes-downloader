@@ -13,8 +13,14 @@ jest.mock<typeof videos>('../videos', () => ({
 }));
 
 jest.mock<Partial<typeof fs>>('fs', () => ({
-	existsSync    : jest.fn().mockImplementation(() => exists),
-	readFileSync  : jest.fn().mockImplementation(() => videosData),
+	existsSync   : jest.fn().mockImplementation((filename) => exists[filename]),
+	readFileSync : jest.fn().mockImplementation((filename) => {
+		switch (filename) {
+			case likesFile: return likesData;
+			case includeLikesFile: return includeLikesData;
+			default: return '';
+		}
+	}),
 	writeFileSync : jest.fn(),
 }));
 
@@ -28,19 +34,22 @@ jest.mock<Partial<typeof logger>>('@anmiles/logger', () => ({
 }));
 
 jest.mock<Partial<typeof paths>>('../paths', () => ({
-	getLikesFile : jest.fn().mockImplementation(() => likesFile),
+	getLikesFile        : jest.fn().mockImplementation(() => likesFile),
+	getIncludeLikesFile : jest.fn().mockImplementation(() => includeLikesFile),
 }));
 
-const profile   = 'username';
-const likesFile = 'likesFile';
+const profile          = 'username';
+const likesFile        = 'likesFile';
+const includeLikesFile = 'includeLikesFile';
 
 const apis = {
 	playlistItems : 'playlistItems',
 } as const;
 
 let playlistItems: Array<{ id?: string | null | undefined, snippet?: { title?: string, resourceId?: { videoId?: string } } }>;
-let videosData: string;
-let exists: boolean;
+let likesData: string;
+let includeLikesData: string;
+let exists: Record<string, boolean> = {};
 
 const args = { playlistId : 'LL', part : [ 'snippet' ], maxResults : 50 };
 
@@ -69,7 +78,7 @@ beforeEach(() => {
 		{ snippet : { title : 'video3', resourceId : { videoId : 'video3Id' } } },
 	];
 
-	videosData = [
+	likesData = [
 		'# video0',
 		'https://www.youtube.com/watch?v=video0Id',
 		'',
@@ -83,7 +92,19 @@ beforeEach(() => {
 		'https://www.youtube.com/watch?v=video3Id',
 	].join('\n');
 
-	exists = true;
+	includeLikesData = [
+		'# video4',
+		'https://www.youtube.com/watch?v=video4Id',
+		'',
+		'# video5',
+		'https://www.youtube.com/watch?v=video5Id',
+		'',
+	].join('\n');
+
+	exists = {
+		[likesFile]        : true,
+		[includeLikesFile] : false,
+	};
 });
 
 describe('src/lib/videos', () => {
@@ -112,7 +133,15 @@ describe('src/lib/videos', () => {
 		it('should write likes into file', async () => {
 			await original.importLikes(profile);
 
-			expect(fs.writeFileSync).toHaveBeenCalledWith(likesFile, videosData);
+			expect(fs.writeFileSync).toHaveBeenCalledWith(likesFile, likesData);
+		});
+
+		it('should add likes from additional likes file if exists', async () => {
+			exists[includeLikesFile] = true;
+
+			await original.importLikes(profile);
+
+			expect(fs.writeFileSync).toHaveBeenCalledWith(likesFile, `${likesData}\n\n${includeLikesData}`);
 		});
 	});
 
@@ -136,7 +165,7 @@ describe('src/lib/videos', () => {
 		});
 
 		it('should throw if likes file does not exist', async () => {
-			exists = false;
+			exists[likesFile] = false;
 
 			await expect(() => original.exportLikes(profile)).rejects.toEqual(`Likes file ${likesFile} doesn't exist, please create it and paste each videos URL (like https://www.youtube.com/watch?v=abcabcabc) on each line`);
 		});
@@ -230,7 +259,7 @@ describe('src/lib/videos', () => {
 
 	describe('parseVideos', () => {
 		it('should extract videos ids from text', () => {
-			expect(original.parseVideos(videosData)).toEqual([
+			expect(original.parseVideos(likesData)).toEqual([
 				'video0Id',
 				'video1Id',
 				'video2Id',

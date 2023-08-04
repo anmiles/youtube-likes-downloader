@@ -2,7 +2,7 @@ import fs from 'fs';
 import type GoogleApis from 'googleapis';
 import { getAPI } from '@anmiles/google-api-wrapper';
 import { log, warn } from '@anmiles/logger';
-import { getLikesFile } from './paths';
+import { getLikesFile, getIncludeLikesFile } from './paths';
 import '@anmiles/prototypes';
 
 import videos from './videos';
@@ -17,11 +17,21 @@ const fullScopes = [
 ];
 
 async function importLikes(profile: string): Promise<void> {
-	const youtubeAPI = await getAPI('youtube', profile);
-	const videosList = await youtubeAPI.getItems((api) => api.playlistItems, { playlistId : 'LL', part : [ 'snippet' ], maxResults : 50 });
-	const videosData = videosList.map(videos.formatVideo).join('\n\n');
-	const likesFile  = getLikesFile(profile);
-	fs.writeFileSync(likesFile, videosData);
+	const likesFile        = getLikesFile(profile);
+	const includeLikesFile = getIncludeLikesFile(profile);
+
+	const youtubeAPI          = await getAPI('youtube', profile);
+	const videosList          = await youtubeAPI.getItems((api) => api.playlistItems, { playlistId : 'LL', part : [ 'snippet' ], maxResults : 50 });
+	const likesData: string[] = [];
+
+	likesData.push(videosList.map(videos.formatVideo).join('\n\n'));
+
+	if (fs.existsSync(includeLikesFile)) {
+		likesData.push(fs.readFileSync(includeLikesFile).toString());
+	}
+
+	const allLikesData = likesData.join('\n\n');
+	fs.writeFileSync(likesFile, allLikesData);
 }
 
 async function exportLikes(profile: string): Promise<void> {
@@ -36,9 +46,9 @@ async function exportLikes(profile: string): Promise<void> {
 		throw `Likes file ${likesFile} doesn't exist, please create it and paste each videos URL (like https://www.youtube.com/watch?v=abcabcabc) on each line`;
 	}
 
-	const videosData = fs.readFileSync(likesFile).toString();
-	const ids        = parseVideos(videosData);
-	const rating     = 'like';
+	const likesData = fs.readFileSync(likesFile).toString();
+	const ids       = parseVideos(likesData);
+	const rating    = 'like';
 
 	for (const id of ids.reverse()) {
 		log(id);
