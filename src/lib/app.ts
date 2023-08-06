@@ -1,4 +1,4 @@
-import { getProfiles } from '@anmiles/google-api-wrapper';
+import { filterProfiles } from '@anmiles/google-api-wrapper';
 import { info } from '@anmiles/logger';
 import { download } from './downloader';
 import { importLikes, exportLikes } from './videos';
@@ -7,33 +7,21 @@ export { run, update };
 export default { run, update };
 
 async function run(profile?: string): Promise<void> {
-	const profiles = getProfiles().filter((p) => !profile || p === profile);
+	for (const foundProfile of filterProfiles(profile)) {
+		info(`Importing likes from ${foundProfile}...`);
+		await importLikes(foundProfile);
 
-	if (profiles.length === 0) {
-		throw 'Please `npm run create` at least one profile';
-	}
-
-	for (const profile of profiles) {
-		info(`Importing likes from ${profile}...`);
-		await importLikes(profile);
-
-		info(`Downloading videos from ${profile}...`);
-		await download(profile);
+		info(`Downloading videos from ${foundProfile}...`);
+		await download(foundProfile);
 	}
 
 	info('Done!');
 }
 
 async function update(profile?: string): Promise<void> {
-	const profiles = getProfiles().filter((p) => !profile || p === profile);
-
-	if (profiles.length === 0) {
-		throw 'Please `npm run create` at least one profile';
-	}
-
-	for (const profile of profiles) {
-		info(`Exporting likes into ${profile}...`);
-		await exportLikes(profile);
+	for (const foundProfile of filterProfiles(profile)) {
+		info(`Exporting likes into ${foundProfile}...`);
+		await exportLikes(foundProfile);
 	}
 
 	info('Done!');
