@@ -7,6 +7,7 @@ import app from '../app';
 
 jest.mock<Partial<typeof downloader>>('../downloader', () => ({
 	download : jest.fn(),
+	validate : jest.fn(),
 }));
 
 jest.mock<Partial<typeof logger>>('@anmiles/logger', () => ({
@@ -58,6 +59,28 @@ describe('src/lib/app', () => {
 
 			expect(downloader.download).toHaveBeenCalledWith(profile1);
 			expect(downloader.download).toHaveBeenCalledWith(profile2);
+		});
+	});
+	describe('check', () => {
+		it('should filter profiles', () => {
+			app.check(profile1);
+
+			expect(googleApiWrapper.filterProfiles).toHaveBeenCalledWith(profile1);
+		});
+
+		it('should output info', () => {
+			app.check();
+
+			expect(logger.info).toHaveBeenCalledWith(`Validating filenames (${profile1})...`);
+			expect(logger.info).toHaveBeenCalledWith(`Validating filenames (${profile2})...`);
+			expect(logger.info).toHaveBeenCalledWith('Done!');
+		});
+
+		it('should validate filenames for all filtered profiles', () => {
+			app.check();
+
+			expect(downloader.validate).toHaveBeenCalledWith(profile1);
+			expect(downloader.validate).toHaveBeenCalledWith(profile2);
 		});
 	});
 

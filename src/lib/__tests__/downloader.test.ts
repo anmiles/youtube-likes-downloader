@@ -1,16 +1,22 @@
 import fs from 'fs';
 import path from 'path';
 import execa from 'execa';
+import logger from '@anmiles/logger';
 import paths from '../paths';
 
 import downloader from '../downloader';
 
 jest.mock<Partial<typeof fs>>('fs', () => ({
 	writeFileSync : jest.fn(),
+	existsSync    : jest.fn(),
+	renameSync    : jest.fn(),
 }));
 
+const originalPath = jest.requireActual('path') as typeof path;
 jest.mock<Partial<typeof path>>('path', () => ({
 	resolve : jest.fn().mockImplementation((relativePath) => `/rootPath/${relativePath}`),
+	join    : jest.fn().mockImplementation((...parts) => parts.join('/')),
+	parse   : jest.fn().mockImplementation((filename) => originalPath.parse(filename)),
 }));
 
 jest.mock('execa', () => jest.fn().mockImplementation(() => ({
@@ -18,6 +24,11 @@ jest.mock('execa', () => jest.fn().mockImplementation(() => ({
 		pipe,
 	},
 })));
+
+jest.mock<Partial<typeof logger>>('@anmiles/logger', () => ({
+	log  : jest.fn(),
+	warn : jest.fn(),
+}));
 
 jest.mock<Partial<typeof paths>>('../paths', () => ({
 	getLikesFile       : jest.fn().mockImplementation((profile) => `${profile}.txt`),
@@ -93,15 +104,126 @@ describe('src/lib/downloader', () => {
 
 			expect(pipe).not.toHaveBeenCalledWith();
 		});
+	});
 
-		it('should return yt-dlp process', async () => {
-			hasStdout = true;
+	describe('validate', () => {
+		const badSymbols = '?*:<>';
 
-			const proc = await downloader.download(profile);
+		const files = [
+			/* filename matches json */
+			{ name : 'title 1 [channel 1].mp4' },
+			{ name : 'title 1 [channel 1].jpg' },
+			{ name : 'title 1 [channel 1].description' },
+			{
+				name : 'title 1 [channel 1].info.json',
+				json : { title : 'title 1', channel : 'channel 1' },
+			},
 
-			expect(proc).toEqual({
-				stdout : { pipe },
+			/* filename doesn't match json */
+			{ name : 'title 2 [channel 2].mp4' },
+			{ name : 'title 2 [channel 2].webp' },
+			{ name : 'title 2 [channel 2].description' },
+			{
+				name : 'title 2 [channel 2].info.json',
+				json : { title : 'new title 2', channel : 'channel 2' },
+			},
+
+			/* filename matches json but contains bad symbols */
+			{ name : `title 3${badSymbols} [channel 3].mp4` },
+			{ name : `title 3${badSymbols} [channel 3].jpg` },
+			{ name : `title 3${badSymbols} [channel 3].description` },
+			{
+				name : `title 3${badSymbols} [channel 3].info.json`,
+				json : { title : `title 3${badSymbols}`, channel : 'channel 3' },
+			},
+		];
+
+		let readJSONSpy: jest.SpyInstance;
+		let recurseSpy: jest.SpyInstance;
+
+		beforeAll(() => {
+			recurseSpy  = jest.spyOn(fs, 'recurse');
+			readJSONSpy = jest.spyOn(fs, 'readJSON');
+		});
+
+		beforeEach(() => {
+			recurseSpy.mockImplementation((outputDir: string, callback: { file: Parameters<typeof fs.recurse>[1]['file'] }) => {
+				if (callback.file) {
+					for (const file of files) {
+						callback.file(path.join(outputDir, file.name), file.name, {} as fs.Stats);
+					}
+				}
 			});
+
+			readJSONSpy.mockImplementation((filepath: string) => {
+				const filename = filepath.split('/').pop();
+				return files.filter(({ name }) => name === filename).pop()?.json;
+			});
+
+			String.prototype.toFilename = function() {
+				return this.replace(badSymbols, '');
+			};
+		});
+
+		afterAll(() => {
+			recurseSpy.mockRestore();
+			readJSONSpy.mockRestore();
+		});
+
+		it('should output files to rename', () => {
+			downloader.validate(profile);
+
+			expect(logger.warn).toHaveBeenCalledWith('Rename');
+			expect(logger.log).toHaveBeenCalledWith('\tOld name: title 2 [channel 2]');
+			expect(logger.log).toHaveBeenCalledWith('\tNew name: new title 2 [channel 2]');
+
+			expect(logger.warn).toHaveBeenCalledWith('Rename');
+			expect(logger.log).toHaveBeenCalledWith('\tOld name: title 3?*:<> [channel 3]');
+			expect(logger.log).toHaveBeenCalledWith('\tNew name: title 3 [channel 3]');
+		});
+
+		it('should rename files', () => {
+			downloader.validate(profile);
+
+			expect(fs.renameSync).toHaveBeenCalledWith(
+				`output/${profile}/title 2 [channel 2].info.json`,
+				`output/${profile}/new title 2 [channel 2].info.json`,
+			);
+
+			expect(fs.renameSync).toHaveBeenCalledWith(
+				`output/${profile}/title 2 [channel 2].description`,
+				`output/${profile}/new title 2 [channel 2].description`,
+			);
+
+			expect(fs.renameSync).toHaveBeenCalledWith(
+				`output/${profile}/title 2 [channel 2].webp`,
+				`output/${profile}/new title 2 [channel 2].webp`,
+			);
+
+			expect(fs.renameSync).toHaveBeenCalledWith(
+				`output/${profile}/title 2 [channel 2].mp4`,
+				`output/${profile}/new title 2 [channel 2].mp4`,
+			);
+
+			expect(fs.renameSync).toHaveBeenCalledWith(
+				`output/${profile}/title 3?*:<> [channel 3].info.json`,
+				`output/${profile}/title 3 [channel 3].info.json`,
+			);
+
+			expect(fs.renameSync).toHaveBeenCalledWith(
+				`output/${profile}/title 3?*:<> [channel 3].description`,
+				`output/${profile}/title 3 [channel 3].description`,
+			);
+
+			expect(fs.renameSync).toHaveBeenCalledWith(
+				`output/${profile}/title 3?*:<> [channel 3].jpg`,
+				`output/${profile}/title 3 [channel 3].jpg`,
+			);
+
+			expect(fs.renameSync).toHaveBeenCalledWith(
+				`output/${profile}/title 3?*:<> [channel 3].mp4`,
+				`output/${profile}/title 3 [channel 3].mp4`,
+			);
 		});
 	});
 });

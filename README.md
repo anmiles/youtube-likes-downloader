@@ -37,11 +37,17 @@ You can create as many profiles as you want.
 `npm start <profile>` will download all liked videos for selected profile
 
 This will never re-download already download ones, just add newly liked ones.
+File names are being checked for validity (and renamed if needed).
 
 1. Automatic download by schedule
     - Schedule task that will run `npm start` periodically
 1. Manual download
     - Run `npm start` manually. If needed, it will interact with you to retrieve credentials if you still didn't run `npm run login` in advance
+
+## Validating
+
+`npm run check` to just validate all filenames
+`npm run check <profile>` will validate all filenames for selected profile
 
 ## Updating
 

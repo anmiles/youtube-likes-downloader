@@ -1,10 +1,10 @@
 import { filterProfiles } from '@anmiles/google-api-wrapper';
 import { info } from '@anmiles/logger';
-import { download } from './downloader';
+import { download, validate } from './downloader';
 import { importLikes, exportLikes } from './videos';
 
-export { run, update };
-export default { run, update };
+export { run, update, check };
+export default { run, update, check };
 
 async function run(profile?: string): Promise<void> {
 	for (const foundProfile of filterProfiles(profile)) {
@@ -13,6 +13,15 @@ async function run(profile?: string): Promise<void> {
 
 		info(`Downloading videos from ${foundProfile}...`);
 		await download(foundProfile);
+	}
+
+	info('Done!');
+}
+
+function check(profile?: string): void {
+	for (const foundProfile of filterProfiles(profile)) {
+		info(`Validating filenames (${foundProfile})...`);
+		validate(foundProfile);
 	}
 
 	info('Done!');
