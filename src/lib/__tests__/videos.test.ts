@@ -1,7 +1,7 @@
 import fs from 'fs';
 import logger from '@anmiles/logger';
 import paths from '../paths';
-import '../../types/jest';
+import '@anmiles/jest-extensions';
 
 import videos from '../videos';
 const original = jest.requireActual('../videos').default as typeof videos;
@@ -120,7 +120,7 @@ describe('src/lib/videos', () => {
 		it('should get data from playlistItems API', async () => {
 			await original.importLikes(profile);
 
-			expect(getItems).toHaveBeenCalledWith(expect.function([ apis ], apis.playlistItems), args);
+			expect(getItems).toHaveBeenCalledWith(expect.toBeFunction([ apis ], apis.playlistItems), args);
 		});
 
 		it('should format each video', async () => {
@@ -155,7 +155,7 @@ describe('src/lib/videos', () => {
 		it('should get data from playlistItems API', async () => {
 			await original.exportLikes(profile);
 
-			expect(getItems).toHaveBeenCalledWith(expect.function([ apis ], apis.playlistItems), args);
+			expect(getItems).toHaveBeenCalledWith(expect.toBeFunction([ apis ], apis.playlistItems), args);
 		});
 
 		it('should read likes file', async () => {
