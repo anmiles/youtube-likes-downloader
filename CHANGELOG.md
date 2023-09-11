@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [7.0.0](../../tags/v7.0.0) - 2023-09-12
 ### Changed
 - Move jest extensions to a separate package
+- Update dependencies (breaking)
 
 ## [6.0.0](../../tags/v6.0.0) - 2023-08-04
 ### Changed
