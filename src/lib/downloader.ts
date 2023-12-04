@@ -11,7 +11,7 @@ export default { download, validate };
 const executable = 'yt-dlp';
 
 const flags = [
-	'--output', formatTitle({ title : '%(title)s', channel : '%(channel)s' }),
+	'--output', formatTitle({ id : '%(id)s', title : '%(title)s', channel : '%(channel)s' }),
 	'--format-sort', 'vcodec:h264,acodec:mp3',
 	'--merge-output-format', 'mp4',
 	'--sponsorblock-remove', 'sponsor',
@@ -28,8 +28,8 @@ const flags = [
 	'--write-info-json',
 ];
 
-function formatTitle({ title, channel }: { title: string, channel: string }): string {
-	return `${title} [${channel}]`;
+function formatTitle({ id, title, channel }: { id: string, title: string, channel: string }): string {
+	return `${title} [${channel}].${id}`;
 }
 
 async function download(profile: string): Promise<execa.ExecaChildProcess<string>> {
@@ -60,7 +60,7 @@ function validate(profile: string) {
 			ext  = `.info${ext}`;
 		}
 
-		allFiles[name] = allFiles[name] || { exts : [] };
+		allFiles[name] = allFiles[name] || { exts : [], newName : undefined };
 		allFiles[name].exts.push(ext);
 
 		if (ext === '.info.json') {
