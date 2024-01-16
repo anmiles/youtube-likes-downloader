@@ -1,5 +1,6 @@
 import fs from 'fs';
 import logger from '@anmiles/logger';
+import { youtube } from 'googleapis/build/src/apis/youtube';
 import paths from '../paths';
 import '@anmiles/jest-extensions';
 
@@ -22,6 +23,10 @@ jest.mock<Partial<typeof fs>>('fs', () => ({
 		}
 	}),
 	writeFileSync : jest.fn(),
+}));
+
+jest.mock<{ youtube: typeof youtube }>('googleapis/build/src/apis/youtube', () => ({
+	youtube : jest.fn().mockImplementation(() => apis),
 }));
 
 jest.mock('@anmiles/google-api-wrapper', () => ({
@@ -60,6 +65,8 @@ const getItems = jest.fn().mockImplementation(async (selectAPI: (api: typeof api
 });
 
 const rate = jest.fn();
+
+const auth = { kind : 'auth' };
 
 const getAPI = jest.fn().mockImplementation(async () => ({
 	getItems,
@@ -114,7 +121,8 @@ describe('src/lib/videos', () => {
 		it('should get youtube API', async () => {
 			await original.importLikes(profile);
 
-			expect(getAPI).toHaveBeenCalledWith('youtube', profile);
+			expect(getAPI).toHaveBeenCalledWith(expect.toBeFunction([ auth ], apis), profile);
+			expect(youtube).toHaveBeenCalledWith({ version : 'v3', auth });
 		});
 
 		it('should get data from playlistItems API', async () => {
@@ -127,7 +135,7 @@ describe('src/lib/videos', () => {
 			await original.importLikes(profile);
 
 			expect(formatVideoSpy).toHaveBeenCalledTimes(playlistItems.length);
-			playlistItems.forEach((video, index) => expect(formatVideoSpy.mock.calls[index][0]).toEqual(video));
+			playlistItems.forEach((video, index) => expect(formatVideoSpy.mock.calls[index]?.[0]).toEqual(video));
 		});
 
 		it('should write likes into file', async () => {
@@ -149,7 +157,8 @@ describe('src/lib/videos', () => {
 		it('should get temporary youtube API', async () => {
 			await original.exportLikes(profile);
 
-			expect(getAPI).toHaveBeenCalledWith('youtube', profile, { temporary : true, scopes : [ 'https://www.googleapis.com/auth/youtube' ] });
+			expect(getAPI).toHaveBeenCalledWith(expect.toBeFunction([ auth ], apis), profile, { temporary : true, scopes : [ 'https://www.googleapis.com/auth/youtube' ] });
+			expect(youtube).toHaveBeenCalledWith({ version : 'v3', auth });
 		});
 
 		it('should get data from playlistItems API', async () => {
@@ -191,8 +200,8 @@ describe('src/lib/videos', () => {
 
 		it('should only rate videos that still not rated', async () => {
 			playlistItems = [
-				playlistItems[0],
-				playlistItems[2],
+				playlistItems[0]!,
+				playlistItems[2]!,
 			];
 
 			await original.exportLikes(profile);
@@ -234,16 +243,52 @@ describe('src/lib/videos', () => {
 				]);
 			});
 
-			it('should throw once fatal error occurred and do not call rate function anymore', async () => {
-				rate.mockResolvedValueOnce(undefined);
+			fatalErrors.forEach(((reason) => {
+				it(`should throw once fatal error '${reason}' occurred and do not call rate function anymore`, async () => {
+					rate.mockResolvedValueOnce(undefined);
+					rate.mockRejectedValueOnce({ errors : [ { reason } ] });
 
-				fatalErrors.forEach((error) => rate.mockRejectedValueOnce({ errors : [ { reason : error } ] }));
+					await expect(() => original.exportLikes(profile)).rejects.toEqual({ errors : [ { reason } ] });
 
-				await expect(() => original.exportLikes(profile)).rejects.toEqual({ errors : [ { reason : fatalErrors[0] } ] });
+					expect(rate).toHaveBeenCalledTimes(2);
+					expect(rate).toHaveBeenCalledWith({ id : 'video3Id', rating : 'like' });
+					expect(rate).toHaveBeenCalledWith({ id : 'video2Id', rating : 'like' });
+				});
+			}));
+
+			it('should re-throw non-API errors', async () => {
+				rate.mockRejectedValueOnce('string error');
+				rate.mockRejectedValueOnce(new Error('error'));
+				rate.mockRejectedValueOnce(null);
+				rate.mockRejectedValueOnce({ });
+
+				await expect(() => original.exportLikes(profile)).rejects.toEqual('string error');
+				await expect(() => original.exportLikes(profile)).rejects.toEqual(new Error('error'));
+				await expect(() => original.exportLikes(profile)).rejects.toEqual(null);
+				await expect(() => original.exportLikes(profile)).rejects.toEqual({ });
+
+				expect(rate).toHaveBeenCalledTimes(4);
+			});
+
+			it('should re-throw unknown non-API errors', async () => {
+				rate.mockRejectedValueOnce({ errors : [ { wrongKey : 'value' } ] });
+				rate.mockRejectedValueOnce({ errors : [ { reason : 'other reason' } ] });
+
+				await expect(() => original.exportLikes(profile)).rejects.toEqual({ errors : [ { wrongKey : 'value' } ] });
+				await expect(() => original.exportLikes(profile)).rejects.toEqual({ errors : [ { reason : 'other reason' } ] });
 
 				expect(rate).toHaveBeenCalledTimes(2);
-				expect(rate).toHaveBeenCalledWith({ id : 'video3Id', rating : 'like' });
-				expect(rate).toHaveBeenCalledWith({ id : 'video2Id', rating : 'like' });
+			});
+
+			it('should not throw if API error doesn\'t have errors in `errors` list', async () => {
+				rate.mockClear();
+
+				rate.mockRejectedValueOnce({ errors : null });
+				rate.mockRejectedValueOnce({ errors : [] });
+
+				await original.exportLikes(profile);
+
+				expect(rate).toHaveBeenCalledTimes(4);
 			});
 		});
 	});

@@ -11,17 +11,25 @@ const dirPaths = {
 };
 
 function getOutputDir(profile: string): string {
-	return fs.ensureDir(path.join(dirPaths.output, profile));
+	const dir = path.join(dirPaths.output, profile);
+	fs.ensureDir(dir, { create : true });
+	return dir;
 }
 
 function getDownloadArchive(profile: string): string {
-	return fs.ensureFile(path.join(dirPaths.input, `${profile}.ytdlp`));
+	const file = path.join(dirPaths.input, `${profile}.ytdlp`);
+	fs.ensureFile(file, { create : true });
+	return file;
 }
 
 function getLikesFile(profile: string): string {
-	return fs.ensureFile(path.join(dirPaths.input, `${profile}.txt`));
+	const file = path.join(dirPaths.input, `${profile}.txt`);
+	fs.ensureFile(file, { create : true });
+	return file;
 }
 
 function getIncludeLikesFile(profile: string): string {
-	return fs.ensureFile(path.join(dirPaths.input, `${profile}.include.txt`));
+	const file = path.join(dirPaths.input, `${profile}.include.txt`);
+	fs.ensureFile(file, { create : true });
+	return file;
 }

@@ -17,6 +17,7 @@ jest.mock<Partial<typeof path>>('path', () => ({
 	resolve : jest.fn().mockImplementation((relativePath) => `/rootPath/${relativePath}`),
 	join    : jest.fn().mockImplementation((...parts) => parts.join('/')),
 	parse   : jest.fn().mockImplementation((filename) => originalPath.parse(filename)),
+	sep     : '/',
 }));
 
 jest.mock('execa', () => jest.fn().mockImplementation(() => ({
@@ -159,7 +160,8 @@ describe('src/lib/downloader', () => {
 			recurseSpy.mockImplementation((outputDir: string, callback: { file: Parameters<typeof fs.recurse>[1]['file'] }) => {
 				if (callback.file) {
 					for (const file of files) {
-						callback.file(path.join(outputDir, file.name), file.name, {} as fs.Stats);
+						// posix function is used since path.sep is mocked to '/'
+						callback.file(fs.posix.joinPath(outputDir, file.name), file.name, {} as fs.Dirent);
 					}
 				}
 			});

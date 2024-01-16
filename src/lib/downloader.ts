@@ -50,7 +50,7 @@ async function download(profile: string): Promise<execa.ExecaChildProcess<string
 
 function validate(profile: string) {
 	const outputDir = getOutputDir(profile);
-	const allFiles  = {} as Record<string, { exts: string[], newName: string}>;
+	const allFiles  = {} as Record<string, { exts: string[], newName: string | undefined }>;
 
 	fs.recurse(outputDir, { file : (filepath, filename) => {
 		let { name, ext } = path.parse(filename);
@@ -60,19 +60,17 @@ function validate(profile: string) {
 			ext  = `.info${ext}`;
 		}
 
-		allFiles[name] = allFiles[name] || { exts : [], newName : undefined };
-		allFiles[name].exts.push(ext);
+		const file = allFiles[name] ||= { exts : [], newName : undefined };
+		file.exts.push(ext);
 
 		if (ext === '.info.json') {
-			const json             = fs.readJSON(filepath);
-			const title            = formatTitle(json);
-			allFiles[name].newName = title.toFilename();
+			const json   = fs.readJSON(filepath);
+			const title  = formatTitle(json);
+			file.newName = title.toFilename();
 		}
-	} }, 1);
+	} }, { depth : 1 });
 
-	for (const name in allFiles) {
-		const { newName, exts } = allFiles[name];
-
+	Object.entries(allFiles).forEach(([ name, { exts, newName } ]) => {
 		if (name !== newName) {
 			warn('Rename');
 			log(`\tOld name: ${name}`);
@@ -84,5 +82,5 @@ function validate(profile: string) {
 				fs.renameSync(oldFile, newFile);
 			}
 		}
-	}
+	});
 }

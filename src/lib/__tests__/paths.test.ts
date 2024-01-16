@@ -22,8 +22,8 @@ jest.mock<Partial<typeof path>>('path', () => ({
 	dirname : jest.fn().mockImplementation((arg) => arg.split('/').slice(0, -1).join('/')),
 }));
 
-const ensureDirSpy  = jest.spyOn(fs, 'ensureDir').mockImplementation((dirPath) => dirPath);
-const ensureFileSpy = jest.spyOn(fs, 'ensureFile').mockImplementation((filePath) => filePath);
+const ensureDirSpy  = jest.spyOn(fs, 'ensureDir').mockImplementation(() => ({ created : true, exists : true }));
+const ensureFileSpy = jest.spyOn(fs, 'ensureFile').mockImplementation(() => ({ created : true, exists : true }));
 
 const profile          = 'username';
 const outputDir        = 'output/username';
@@ -38,7 +38,7 @@ describe('src/lib/paths', () => {
 		it('should call ensureDir', () => {
 			original.getOutputDir(profile);
 
-			expect(ensureDirSpy).toHaveBeenCalledWith(outputDir);
+			expect(ensureDirSpy).toHaveBeenCalledWith(outputDir, { create : true });
 		});
 
 		it('should return outputDir', () => {
@@ -52,7 +52,7 @@ describe('src/lib/paths', () => {
 		it('should call ensureFile', () => {
 			original.getDownloadArchive(profile);
 
-			expect(ensureFileSpy).toHaveBeenCalledWith(downloadArchive);
+			expect(ensureFileSpy).toHaveBeenCalledWith(downloadArchive, { create : true });
 		});
 
 		it('should return downloadArchive', () => {
@@ -66,7 +66,7 @@ describe('src/lib/paths', () => {
 		it('should call ensureFile', () => {
 			original.getLikesFile(profile);
 
-			expect(ensureFileSpy).toHaveBeenCalledWith(likesFile);
+			expect(ensureFileSpy).toHaveBeenCalledWith(likesFile, { create : true });
 		});
 
 		it('should return likesFile', () => {
@@ -80,7 +80,7 @@ describe('src/lib/paths', () => {
 		it('should call ensureFile', () => {
 			original.getIncludeLikesFile(profile);
 
-			expect(ensureFileSpy).toHaveBeenCalledWith(includeLikesFile);
+			expect(ensureFileSpy).toHaveBeenCalledWith(includeLikesFile, { create : true });
 		});
 
 		it('should return includeLikesFile', () => {
