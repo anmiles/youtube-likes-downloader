@@ -24,6 +24,7 @@ This application may work with multiple profiles (download videos liked from mul
 
 1. Come up with any profile name you want
 1. Execute `npm run create <profile>`
+
 You can create as many profiles as you want.
 
 ## Authentication
