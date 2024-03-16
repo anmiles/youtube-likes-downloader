@@ -3,9 +3,6 @@ import { info } from '@anmiles/logger';
 import { download, validate } from './downloader';
 import { importLikes, exportLikes } from './videos';
 
-export { run, update, check };
-export default { run, update, check };
-
 async function run(profile?: string): Promise<void> {
 	for (const foundProfile of filterProfiles(profile)) {
 		info(`Importing likes from ${foundProfile}...`);
@@ -36,3 +33,5 @@ async function update(profile?: string): Promise<void> {
 	info('Done!');
 }
 
+export { run, update, check };
+export default { run, update, check };

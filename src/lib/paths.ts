@@ -2,9 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import '@anmiles/prototypes';
 
-export { getOutputDir, getDownloadArchive, getLikesFile, getIncludeLikesFile };
-export default { getOutputDir, getDownloadArchive, getLikesFile, getIncludeLikesFile };
-
 const dirPaths = {
 	input  : 'input',
 	output : 'output',
@@ -33,3 +30,6 @@ function getIncludeLikesFile(profile: string): string {
 	fs.ensureFile(file, { create : true });
 	return file;
 }
+
+export { getOutputDir, getDownloadArchive, getLikesFile, getIncludeLikesFile };
+export default { getOutputDir, getDownloadArchive, getLikesFile, getIncludeLikesFile };
