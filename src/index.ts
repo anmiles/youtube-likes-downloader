@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 import { error } from '@anmiles/logger';
 import { run, check } from './lib/app';
 
