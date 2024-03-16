@@ -1,58 +1,63 @@
 {
-  "name": "youtube-likes-downloader",
-  "version": "9.0.6",
-  "description": "Download all liked videos from youtube",
-  "keywords": [
-    "youtube",
-    "download",
-    "likes"
-  ],
-  "author": "Anatoliy Oblaukhov",
-  "homepage": "https://github.com/anmiles/youtube-likes-downloader",
-  "repository": "github:anmiles/youtube-likes-downloader",
-  "license": "MIT",
-  "engines": {
-    "node": ">=18.14.2"
-  },
-  "scripts": {
-    "build": "rimraf dist && tsc -p ./tsconfig.build.json",
-    "build:ci": "tsc -noEmit -p ./tsconfig.build.json",
-    "lint": "eslint --ext .js,.ts .",
-    "lint:fix": "npm run lint -- --fix",
-    "test": "jest --verbose",
-    "test:coverage": "npm test -- --coverage",
-    "test:ci": "npm test -- --ci --coverage",
-    "test:watch": "npm test -- --watch",
-    "test:watch:coverage": "npm test -- --watch --coverage",
-    "test:report:coverage": "nyc report --nycrc-path ./coverage.config.js -t ./coverage --report-dir ./coverage",
-    "start": "node ./dist/index.js",
-    "check": "node ./dist/check.js",
-    "update": "node ./dist/update.js",
-    "create": "node ./dist/create.js",
-    "login": "node ./dist/login.js"
-  },
-  "dependencies": {
-    "@anmiles/google-api-wrapper": "^17.0.9",
-    "@anmiles/logger": "^6.0.2",
-    "@anmiles/prototypes": "^9.0.2",
-    "execa": "^5.1.1",
-    "googleapis": "^131.0.0"
-  },
-  "devDependencies": {
-    "@anmiles/eslint-config": "^5.0.2",
-    "@anmiles/jest-extensions": "^4.0.3",
-    "@anmiles/tsconfig": "^2.0.1",
-    "@types/jest": "^29.5.11",
-    "@typescript-eslint/eslint-plugin": "^6.20.0",
-    "@typescript-eslint/parser": "^6.20.0",
-    "eslint": "^8.56.0",
-    "eslint-plugin-align-assignments": "^1.1.2",
-    "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-jest": "^27.6.3",
-    "jest": "^29.7.0",
-    "nyc": "^15.1.0",
-    "rimraf": "^5.0.5",
-    "ts-jest": "^29.1.2",
-    "typescript": "^5.3.3"
-  }
+	"name": "youtube-likes-downloader",
+	"version": "9.0.6",
+	"description": "Download all liked videos from youtube",
+	"keywords": [
+		"youtube",
+		"download",
+		"likes"
+	],
+	"author": "Anatoliy Oblaukhov",
+	"homepage": "https://github.com/anmiles/youtube-likes-downloader",
+	"repository": "github:anmiles/youtube-likes-downloader",
+	"license": "MIT",
+	"engines": {
+		"node": ">=18.18.0"
+	},
+	"scripts": {
+		"build": "rimraf dist && tsc -p ./tsconfig.build.json",
+		"build:ci": "tsc -noEmit -p ./tsconfig.build.json",
+		"lint": "eslint .",
+		"lint:fix": "npm run lint -- --fix",
+		"test": "jest --verbose",
+		"test:coverage": "npm test -- --coverage",
+		"test:ci": "npm test -- --ci --coverage",
+		"test:watch": "npm test -- --watch",
+		"test:watch:coverage": "npm test -- --watch --coverage",
+		"test:report:coverage": "nyc report --nycrc-path ./coverage.config.js -t ./coverage --report-dir ./coverage",
+		"start": "node ./dist/index.js",
+		"check": "node ./dist/check.js",
+		"update": "node ./dist/update.js",
+		"create": "node ./dist/create.js",
+		"login": "node ./dist/login.js"
+	},
+	"dependencies": {
+		"@anmiles/google-api-wrapper": "^18.0.1",
+		"@anmiles/logger": "^7.0.1",
+		"@anmiles/prototypes": "^10.0.1",
+		"execa": "^5.1.1",
+		"googleapis": "^130.0.0"
+	},
+	"devDependencies": {
+		"@anmiles/eslint-config": "^7.0.1",
+		"@anmiles/jest-extensions": "^5.0.1",
+		"@anmiles/tsconfig": "^2.0.1",
+		"@stylistic/eslint-plugin": "^1.7.0",
+		"@types/jest": "^29.5.12",
+		"@typescript-eslint/eslint-plugin": "^7.2.0",
+		"@typescript-eslint/parser": "^7.2.0",
+		"eslint": "^8.57.0",
+		"eslint-import-resolver-typescript": "^3.6.1",
+		"eslint-plugin-align-assignments": "^1.1.2",
+		"eslint-plugin-import": "^2.29.1",
+		"eslint-plugin-jest": "^27.9.0",
+		"eslint-plugin-jsonc": "^2.13.0",
+		"eslint-plugin-n": "^16.6.2",
+		"eslint-plugin-promise": "^6.1.1",
+		"jest": "^29.7.0",
+		"nyc": "^15.1.0",
+		"rimraf": "^5.0.5",
+		"ts-jest": "^29.1.2",
+		"typescript": "^5.4.2"
+	}
 }

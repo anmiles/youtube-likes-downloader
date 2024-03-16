@@ -19,7 +19,7 @@ jest.mock<Partial<typeof googleApiWrapper>>('@anmiles/google-api-wrapper', () =>
 }));
 
 jest.mock<Partial<typeof videos>>('../videos', () => ({
-	importLikes : jest.fn().mockImplementation(async () => videosData),
+	importLikes : jest.fn().mockImplementation(() => videosData),
 	exportLikes : jest.fn().mockImplementation(),
 }));
 

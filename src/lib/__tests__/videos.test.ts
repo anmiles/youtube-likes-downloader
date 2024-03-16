@@ -1,21 +1,23 @@
 import fs from 'fs';
+import type GoogleApis from 'googleapis';
 import logger from '@anmiles/logger';
 import { youtube } from 'googleapis/build/src/apis/youtube';
-import paths from '../paths';
+import type paths from '../paths';
 import '@anmiles/jest-extensions';
 
 import videos from '../videos';
-const original = jest.requireActual('../videos').default as typeof videos;
+
+const original = jest.requireActual<{ default : typeof videos }>('../videos').default;
 jest.mock<typeof videos>('../videos', () => ({
 	exportLikes : jest.fn(),
 	importLikes : jest.fn(),
-	formatVideo : jest.fn().mockImplementation((video) => original.formatVideo(video)),
-	parseVideos : jest.fn().mockImplementation((videosData) => original.parseVideos(videosData)),
+	formatVideo : jest.fn().mockImplementation((video: GoogleApis.youtube_v3.Schema$PlaylistItem) => original.formatVideo(video)),
+	parseVideos : jest.fn().mockImplementation((videosData: string) => original.parseVideos(videosData)),
 }));
 
 jest.mock<Partial<typeof fs>>('fs', () => ({
-	existsSync   : jest.fn().mockImplementation((filename) => exists[filename]),
-	readFileSync : jest.fn().mockImplementation((filename) => {
+	existsSync   : jest.fn().mockImplementation((filename: string) => exists[filename]),
+	readFileSync : jest.fn().mockImplementation((filename: string) => {
 		switch (filename) {
 			case likesFile: return likesData;
 			case includeLikesFile: return includeLikesData;
@@ -25,12 +27,13 @@ jest.mock<Partial<typeof fs>>('fs', () => ({
 	writeFileSync : jest.fn(),
 }));
 
-jest.mock<{ youtube: typeof youtube }>('googleapis/build/src/apis/youtube', () => ({
+jest.mock<{ youtube : typeof youtube }>('googleapis/build/src/apis/youtube', () => ({
 	youtube : jest.fn().mockImplementation(() => apis),
 }));
 
 jest.mock('@anmiles/google-api-wrapper', () => ({
-	getAPI : jest.fn().mockImplementation((...args) => getAPI(...args)),
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- simplified mock
+	getAPI : jest.fn().mockImplementation((...args: unknown[]) => getAPI(...args)),
 }));
 
 jest.mock<Partial<typeof logger>>('@anmiles/logger', () => ({
@@ -51,31 +54,33 @@ const apis = {
 	playlistItems : 'playlistItems',
 } as const;
 
-let playlistItems: Array<{ id?: string | null | undefined, snippet?: { title?: string, resourceId?: { videoId?: string } } }>;
+let playlistItems: Array<{ id? : string | null | undefined; snippet? : { title? : string; resourceId? : { videoId? : string } } }>;
 let likesData: string;
 let includeLikesData: string;
 let exists: Record<string, boolean> = {};
 
 const args = { playlistId : 'LL', part : [ 'snippet' ], maxResults : 50 };
 
-const getItems = jest.fn().mockImplementation(async (selectAPI: (api: typeof apis) => typeof apis[keyof typeof apis]) => {
+function mockGetItems(selectAPI: ((api: typeof apis) => typeof apis[keyof typeof apis])): typeof playlistItems {
 	switch (selectAPI(apis)) {
 		case apis.playlistItems: return playlistItems;
 	}
-});
+}
+
+const getItems = jest.fn().mockImplementation(mockGetItems) as jest.Mock<unknown, Parameters<typeof mockGetItems>>;
 
 const rate = jest.fn();
 
-const auth = { kind : 'auth' };
-
-const getAPI = jest.fn().mockImplementation(async () => ({
-	getItems,
+// eslint-disable-next-line @typescript-eslint/require-await -- allow partial mock
+const getAPI = jest.fn().mockImplementation(async () => ({ getItems,
 	api : {
 		videos : {
 			rate,
 		},
 	},
 }));
+
+const auth = { kind : 'auth' };
 
 beforeEach(() => {
 	playlistItems = [
@@ -135,7 +140,9 @@ describe('src/lib/videos', () => {
 			await original.importLikes(profile);
 
 			expect(formatVideoSpy).toHaveBeenCalledTimes(playlistItems.length);
-			playlistItems.forEach((video, index) => expect(formatVideoSpy.mock.calls[index]?.[0]).toEqual(video));
+			playlistItems.forEach((video, index) => {
+				expect(formatVideoSpy.mock.calls[index]?.[0]).toEqual(video);
+			});
 		});
 
 		it('should write likes into file', async () => {
@@ -176,7 +183,7 @@ describe('src/lib/videos', () => {
 		it('should throw if likes file does not exist', async () => {
 			exists[likesFile] = false;
 
-			await expect(() => original.exportLikes(profile)).rejects.toEqual(`Likes file ${likesFile} doesn't exist, please create it and paste each videos URL (like https://www.youtube.com/watch?v=abcabcabc) on each line`);
+			await expect(async () => original.exportLikes(profile)).rejects.toEqual(new Error(`Likes file ${likesFile} doesn't exist, please create it and paste each videos URL (like https://www.youtube.com/watch?v=abcabcabc) on each line`));
 		});
 
 		it('should process and log each video id in reverse order', async () => {
@@ -212,17 +219,43 @@ describe('src/lib/videos', () => {
 
 		describe('errors', () => {
 			const minorErrors = [
-				'videoNotFound',
-				'notFound',
-				'videoRatingDisabled',
-				'videoPurchaseRequired',
+				{
+					reason  : 'videoNotFound',
+					message : 'Native videoNotFound error message',
+				},
+				{
+					reason  : 'notFound',
+					message : 'Native notFound error message',
+				},
+				{
+					reason  : 'videoRatingDisabled',
+					message : 'Native videoRatingDisabled error message',
+				},
+				{
+					reason  : 'videoPurchaseRequired',
+					message : 'Native videoPurchaseRequired error message',
+				},
 			];
 
 			const fatalErrors = [
-				'emailNotVerified',
-				'invalidRating',
-				'forbidden',
+				{
+					reason  : 'emailNotVerified',
+					message : 'Native emailNotVerified error message',
+				},
+				{
+					reason  : 'invalidRating',
+					message : 'Native invalidRating error message',
+				},
+				{
+					reason  : 'forbidden',
+					message : 'Native forbidden error message',
+				},
 			];
+
+			const secondError = {
+				reason  : 'anotherError',
+				message : 'Another error',
+			};
 
 			beforeEach(() => {
 				playlistItems = [];
@@ -231,7 +264,7 @@ describe('src/lib/videos', () => {
 			it('should warn about errors that can be skipped', async () => {
 				const warnSpy = jest.spyOn(logger, 'warn');
 
-				minorErrors.forEach((error) => rate.mockRejectedValueOnce({ errors : [ { reason : error } ] }));
+				minorErrors.forEach((error) => rate.mockRejectedValueOnce({ errors : [ error, secondError ] }));
 
 				await original.exportLikes(profile);
 
@@ -243,18 +276,28 @@ describe('src/lib/videos', () => {
 				]);
 			});
 
-			fatalErrors.forEach(((reason) => {
-				it(`should throw once fatal error '${reason}' occurred and do not call rate function anymore`, async () => {
+			fatalErrors.forEach((error) => {
+				it(`should throw once fatal error '${error.reason}' occurred and do not call rate function anymore`, async () => {
 					rate.mockResolvedValueOnce(undefined);
-					rate.mockRejectedValueOnce({ errors : [ { reason } ] });
+					rate.mockRejectedValueOnce({ errors : [ error, secondError ] });
 
-					await expect(() => original.exportLikes(profile)).rejects.toEqual({ errors : [ { reason } ] });
+					await expect(async () => original.exportLikes(profile)).rejects.toEqual({ errors : [ error, secondError ] });
 
 					expect(rate).toHaveBeenCalledTimes(2);
 					expect(rate).toHaveBeenCalledWith({ id : 'video3Id', rating : 'like' });
 					expect(rate).toHaveBeenCalledWith({ id : 'video2Id', rating : 'like' });
 				});
-			}));
+			});
+
+			it('should re-throw unknown API errors', async () => {
+				rate.mockRejectedValueOnce({ errors : [ { reason : 'other reason' } ] });
+				rate.mockRejectedValueOnce({ errors : [ { customKey : 'value' } ] });
+
+				await expect(async () => original.exportLikes(profile)).rejects.toEqual({ errors : [ { reason : 'other reason' } ] });
+				await expect(async () => original.exportLikes(profile)).rejects.toEqual({ errors : [ { customKey : 'value' } ] });
+
+				expect(rate).toHaveBeenCalledTimes(2);
+			});
 
 			it('should re-throw non-API errors', async () => {
 				rate.mockRejectedValueOnce('string error');
@@ -262,27 +305,15 @@ describe('src/lib/videos', () => {
 				rate.mockRejectedValueOnce(null);
 				rate.mockRejectedValueOnce({ });
 
-				await expect(() => original.exportLikes(profile)).rejects.toEqual('string error');
-				await expect(() => original.exportLikes(profile)).rejects.toEqual(new Error('error'));
-				await expect(() => original.exportLikes(profile)).rejects.toEqual(null);
-				await expect(() => original.exportLikes(profile)).rejects.toEqual({ });
+				await expect(async () => original.exportLikes(profile)).rejects.toEqual('string error');
+				await expect(async () => original.exportLikes(profile)).rejects.toEqual(new Error('error'));
+				await expect(async () => original.exportLikes(profile)).rejects.toEqual(null);
+				await expect(async () => original.exportLikes(profile)).rejects.toEqual({ });
 
 				expect(rate).toHaveBeenCalledTimes(4);
 			});
 
-			it('should re-throw unknown non-API errors', async () => {
-				rate.mockRejectedValueOnce({ errors : [ { wrongKey : 'value' } ] });
-				rate.mockRejectedValueOnce({ errors : [ { reason : 'other reason' } ] });
-
-				await expect(() => original.exportLikes(profile)).rejects.toEqual({ errors : [ { wrongKey : 'value' } ] });
-				await expect(() => original.exportLikes(profile)).rejects.toEqual({ errors : [ { reason : 'other reason' } ] });
-
-				expect(rate).toHaveBeenCalledTimes(2);
-			});
-
 			it('should not throw if API error doesn\'t have errors in `errors` list', async () => {
-				rate.mockClear();
-
 				rate.mockRejectedValueOnce({ errors : null });
 				rate.mockRejectedValueOnce({ errors : [] });
 

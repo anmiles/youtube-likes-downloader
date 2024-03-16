@@ -11,12 +11,7 @@ Download all liked videos from youtube
 
 ## Installation
 
-1. Install dependencies
-    - `npm install`
-1. Build
-    - `npm run build`
-1. Test everything
-    - `npm test`
+`npm install youtube-likes-downloader`
 
 ## Adding profiles
 

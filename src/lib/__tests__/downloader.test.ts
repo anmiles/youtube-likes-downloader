@@ -1,5 +1,5 @@
 import fs from 'fs';
-import path from 'path';
+import type path from 'path';
 import execa from 'execa';
 import logger from '@anmiles/logger';
 import paths from '../paths';
@@ -12,18 +12,20 @@ jest.mock<Partial<typeof fs>>('fs', () => ({
 	renameSync    : jest.fn(),
 }));
 
-const originalPath = jest.requireActual('path') as typeof path;
+const originalPath = jest.requireActual<typeof path>('path');
 jest.mock<Partial<typeof path>>('path', () => ({
 	resolve : jest.fn().mockImplementation((relativePath) => `/rootPath/${relativePath}`),
-	join    : jest.fn().mockImplementation((...parts) => parts.join('/')),
-	parse   : jest.fn().mockImplementation((filename) => originalPath.parse(filename)),
+	join    : jest.fn().mockImplementation((...paths: string[]) => paths.join('/')),
+	parse   : jest.fn().mockImplementation((filename: string) => originalPath.parse(filename)),
 	sep     : '/',
 }));
 
 jest.mock('execa', () => jest.fn().mockImplementation(() => ({
-	stdout : !hasStdout ? null : {
-		pipe,
-	},
+	stdout : !hasStdout
+		? null
+		: {
+			pipe,
+		},
 })));
 
 jest.mock<Partial<typeof logger>>('@anmiles/logger', () => ({
@@ -111,6 +113,7 @@ describe('src/lib/downloader', () => {
 		const badSymbols = '?*:<>';
 
 		const files = [
+
 			/* filename matches json */
 			{ name : 'title 1 [channel 1].id1.mp4' },
 			{ name : 'title 1 [channel 1].id1.jpg' },
@@ -157,7 +160,8 @@ describe('src/lib/downloader', () => {
 		});
 
 		beforeEach(() => {
-			recurseSpy.mockImplementation((outputDir: string, callback: { file: Parameters<typeof fs.recurse>[1]['file'] }) => {
+			// eslint-disable-next-line promise/prefer-await-to-callbacks -- allow callbacks in `fs.recurse`
+			recurseSpy.mockImplementation((outputDir: string, callback: { file : Parameters<typeof fs.recurse>[1]['file'] }) => {
 				if (callback.file) {
 					for (const file of files) {
 						// posix function is used since path.sep is mocked to '/'

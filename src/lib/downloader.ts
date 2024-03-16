@@ -5,8 +5,11 @@ import { log, warn } from '@anmiles/logger';
 import { getLikesFile, getOutputDir, getDownloadArchive } from './paths';
 import '@anmiles/prototypes';
 
-export { download, validate };
-export default { download, validate };
+interface VideoInfo {
+	id      : string;
+	title   : string;
+	channel : string;
+}
 
 const executable = 'yt-dlp';
 
@@ -28,11 +31,11 @@ const flags = [
 	'--write-info-json',
 ];
 
-function formatTitle({ id, title, channel }: { id: string, title: string, channel: string }): string {
+function formatTitle({ id, title, channel }: VideoInfo): string {
 	return `${title} [${channel}].${id}`;
 }
 
-async function download(profile: string): Promise<execa.ExecaChildProcess<string>> {
+async function download(profile: string): Promise<execa.ExecaChildProcess> {
 	const likesFile       = getLikesFile(profile);
 	const outputDir       = getOutputDir(profile);
 	const downloadArchive = getDownloadArchive(profile);
@@ -48,9 +51,9 @@ async function download(profile: string): Promise<execa.ExecaChildProcess<string
 	return proc;
 }
 
-function validate(profile: string) {
+function validate(profile: string): void {
 	const outputDir = getOutputDir(profile);
-	const allFiles  = {} as Record<string, { exts: string[], newName: string | undefined }>;
+	const allFiles  = {} as Record<string, { exts : string[]; newName : string | undefined }>;
 
 	fs.recurse(outputDir, { file : (filepath, filename) => {
 		let { name, ext } = path.parse(filename);
@@ -60,11 +63,11 @@ function validate(profile: string) {
 			ext  = `.info${ext}`;
 		}
 
-		const file = allFiles[name] ||= { exts : [], newName : undefined };
+		const file = allFiles[name] ??= { exts : [], newName : undefined };
 		file.exts.push(ext);
 
 		if (ext === '.info.json') {
-			const json   = fs.readJSON(filepath);
+			const json   = fs.readJSON<VideoInfo>(filepath);
 			const title  = formatTitle(json);
 			file.newName = title.toFilename();
 		}
@@ -84,3 +87,6 @@ function validate(profile: string) {
 		}
 	});
 }
+
+export { download, validate };
+export default { download, validate };

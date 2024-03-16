@@ -1,9 +1,10 @@
 import fs from 'fs';
-import path from 'path';
+import type path from 'path';
 import '@anmiles/prototypes';
 
-import paths from '../paths';
-const original = jest.requireActual('../paths').default as typeof paths;
+import type paths from '../paths';
+
+const original = jest.requireActual<{ default : typeof paths }>('../paths').default;
 jest.mock<typeof paths>('../paths', () => ({
 	getOutputDir        : jest.fn().mockImplementation(() => outputDir),
 	getDownloadArchive  : jest.fn().mockImplementation(() => downloadArchive),
@@ -18,8 +19,8 @@ jest.mock<Partial<typeof fs>>('fs', () => ({
 }));
 
 jest.mock<Partial<typeof path>>('path', () => ({
-	join    : jest.fn().mockImplementation((...args) => args.join('/')),
-	dirname : jest.fn().mockImplementation((arg) => arg.split('/').slice(0, -1).join('/')),
+	join    : jest.fn().mockImplementation((...paths: string[]) => paths.join('/')),
+	dirname : jest.fn().mockImplementation((_path: string) => _path.split('/').slice(0, -1).join('/')),
 }));
 
 const ensureDirSpy  = jest.spyOn(fs, 'ensureDir').mockImplementation(() => ({ created : true, exists : true }));

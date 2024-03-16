@@ -8,9 +8,6 @@ import '@anmiles/prototypes';
 
 import videos from './videos';
 
-export { importLikes, exportLikes };
-export default { importLikes, exportLikes, formatVideo, parseVideos };
-
 const urlPrefix = 'https://www.youtube.com/watch?v=';
 
 const fullScopes = [
@@ -40,11 +37,11 @@ async function exportLikes(profile: string): Promise<void> {
 	const videosList = await youtubeAPI.getItems((api) => api.playlistItems, { playlistId : 'LL', part : [ 'snippet' ], maxResults : 50 });
 
 	/* istanbul ignore next */
-	const existingIDs = videosList.map((video) => video.snippet?.resourceId?.videoId || 'unknown');
+	const existingIDs = videosList.map((video) => video.snippet?.resourceId?.videoId ?? 'unknown');
 	const likesFile   = getLikesFile(profile);
 
 	if (!fs.existsSync(likesFile)) {
-		throw `Likes file ${likesFile} doesn't exist, please create it and paste each videos URL (like https://www.youtube.com/watch?v=abcabcabc) on each line`;
+		throw new Error(`Likes file ${likesFile} doesn't exist, please create it and paste each videos URL (like https://www.youtube.com/watch?v=abcabcabc) on each line`);
 	}
 
 	const likesData = fs.readFileSync(likesFile).toString();
@@ -62,8 +59,10 @@ async function exportLikes(profile: string): Promise<void> {
 			await youtubeAPI.api!.videos.rate({ id, rating });
 		} catch (ex: unknown) {
 			if (typeof ex === 'object' && ex && 'errors' in ex) {
-				if (Array.isArray(ex['errors']) && ex.errors.length > 0) {
-					switch (ex.errors[0].reason) {
+				if (Array.isArray(ex.errors) && ex.errors.length > 0) {
+					const firstError = ex.errors[0] as { reason : string; message : string };
+
+					switch (firstError.reason) {
 						case 'videoNotFound':
 						case 'notFound':
 							warn(`Video ${id} not found`);
@@ -75,7 +74,7 @@ async function exportLikes(profile: string): Promise<void> {
 							break;
 
 						default:
-							throw ex;
+							throw ex as unknown;
 					}
 				}
 			} else {
@@ -87,7 +86,7 @@ async function exportLikes(profile: string): Promise<void> {
 
 function formatVideo(video: GoogleApis.youtube_v3.Schema$PlaylistItem): string {
 	/* istanbul ignore next */
-	return [ `# ${video.snippet?.title || 'Unknown'}`, `${urlPrefix}${video.snippet?.resourceId?.videoId || 'unknown'}` ].join('\n');
+	return [ `# ${video.snippet?.title ?? 'Unknown'}`, `${urlPrefix}${video.snippet?.resourceId?.videoId ?? 'unknown'}` ].join('\n');
 }
 
 function parseVideos(videosData: string): string[] {
@@ -95,3 +94,6 @@ function parseVideos(videosData: string): string[] {
 	const matches = [ ...videosData.matchAll(regex) ];
 	return matches.map((match) => match[1]!);
 }
+
+export { importLikes, exportLikes };
+export default { importLikes, exportLikes, formatVideo, parseVideos };
