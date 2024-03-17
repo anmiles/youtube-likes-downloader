@@ -21,7 +21,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/cache@v4
       with:
-        path: node_modules
+        path: "**/node_modules"
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
         lookup-only: true
     - run: npm ci
@@ -36,7 +36,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/cache@v4
       with:
-        path: node_modules
+        path: "**/node_modules"
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
     - run: npm run build:ci
 
@@ -50,7 +50,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/cache@v4
       with:
-        path: node_modules
+        path: "**/node_modules"
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
     - run: npm run lint
 
@@ -64,11 +64,11 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/cache@v4
       with:
-        path: node_modules
+        path: "**/node_modules"
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
     - uses: actions/cache@v4
       with:
-        path: coverage
+        path: "**/coverage"
         key: "coverage-${{ hashFiles('package-lock.json') }}"
         lookup-only: true
     - run: npm run test:ci
@@ -85,10 +85,10 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/cache@v4
       with:
-        path: node_modules
+        path: "**/node_modules"
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
     - uses: actions/cache@v4
       with:
-        path: coverage
+        path: "**/coverage"
         key: "coverage-${{ hashFiles('package-lock.json') }}"
     - run: npm run test:report:coverage
