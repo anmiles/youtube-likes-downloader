@@ -11,7 +11,12 @@ Download all liked videos from youtube
 
 ## Installation
 
-`npm install youtube-likes-downloader`
+```bash
+git clone https://github.com/anmiles/youtube-likes-downloader.git
+cd youtube-likes-downloader
+npm clean-install
+npm run build
+```
 
 ## Adding profiles
 
