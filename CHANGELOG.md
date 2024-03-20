@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [10.0.1](../../tags/v10.0.1) - 2024-03-20
+### Changed
+- Update dependencies
+
 ## [10.0.0](../../tags/v10.0.0) - 2024-03-16
 ### Changed
 - Update eslint config and raise minimum supported NodeJS version to match one in typescript-eslint plugin
