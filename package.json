@@ -1,6 +1,6 @@
 {
 	"name": "youtube-likes-downloader",
-	"version": "10.0.0",
+	"version": "10.0.1",
 	"description": "Download all liked videos from youtube",
 	"keywords": [
 		"youtube",
