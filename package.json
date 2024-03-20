@@ -16,7 +16,6 @@
 	},
 	"scripts": {
 		"build": "rimraf dist && tsc -p ./tsconfig.build.json",
-		"build:ci": "tsc -noEmit -p ./tsconfig.build.json",
 		"lint": "eslint .",
 		"lint:fix": "npm run lint -- --fix",
 		"test": "jest --verbose",

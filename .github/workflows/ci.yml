@@ -38,7 +38,7 @@ jobs:
       with:
         path: "**/node_modules"
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
-    - run: npm run build:ci
+    - run: npm run build
 
   lint:
     needs: build
