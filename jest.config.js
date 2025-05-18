@@ -1,19 +1,19 @@
 module.exports = {
-	preset    : 'ts-jest',
-	transform : {
-		'^.+\\.tsx?$' : [ 'ts-jest', {
-			isolatedModules : true, // otherwise tests are slowing down a lot because of googleapis
-			tsconfig        : './tsconfig.test.json',
+	preset   : 'ts-jest',
+	transform: {
+		'^.+\\.tsx?$': [ 'ts-jest', {
+			tsconfig: './tsconfig.test.json',
 		} ],
 	},
 
-	clearMocks : true,
+	clearMocks: true,
 
-	roots     : [ '<rootDir>/src' ],
-	testMatch : [ '<rootDir>/src/**/__tests__/*.test.{ts,tsx}' ],
+	roots    : [ '<rootDir>/src' ],
+	testMatch: [ '<rootDir>/src/**/__tests__/*.test.{ts,tsx}' ],
 
-	collectCoverageFrom : [
+	collectCoverageFrom: [
 		'<rootDir>/src/**/*.{ts,tsx}',
 		'!<rootDir>/src/**/__tests__/**',
+		'!<rootDir>/src/**/__mocks__/**',
 	],
 };

@@ -1,7 +1,8 @@
 /* istanbul ignore file */
 
 import { error } from '@anmiles/logger';
-import { run, check } from './lib/app';
+
+import { check, run } from './lib/app';
 
 run(process.argv[2])
 	.then(() => {

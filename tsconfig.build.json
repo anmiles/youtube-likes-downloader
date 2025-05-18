@@ -3,5 +3,11 @@
 
 	"exclude" : [
 		"**/__tests__/",
+		"**/__mocks__/",
 	],
+
+	"compilerOptions" : {
+		"rootDir" : "./src",
+		"outDir" : "./dist",
+	},
 }

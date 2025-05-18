@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 
-import { error } from '@anmiles/logger';
 import { createProfile } from '@anmiles/google-api-wrapper';
+import { error } from '@anmiles/logger';
 
 try {
 	createProfile(process.argv[2]);

@@ -1,0 +1,25 @@
+{
+	"version": "0.2",
+	"enabled": true,
+	"language": "en",
+	"minWordLength": 4,
+	"enableGlobDot": true,
+	"useGitignore": true,
+	"ignorePaths": [
+		".git",
+		"package-lock.json"
+	],
+	"words": [
+		"acodec",
+		"anmiles",
+		"anatoliy",
+		"googleusercontent",
+		"khtml",
+		"oblaukhov",
+		"playlistitems",
+		"sponsorblock",
+		"vcodec",
+		"ytdlp"
+	],
+	"flagWords": []
+}

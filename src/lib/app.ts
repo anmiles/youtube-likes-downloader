@@ -1,9 +1,10 @@
 import { filterProfiles } from '@anmiles/google-api-wrapper';
 import { info } from '@anmiles/logger';
-import { download, validate } from './downloader';
-import { importLikes, exportLikes } from './videos';
 
-async function run(profile?: string): Promise<void> {
+import { download, validate } from './downloader';
+import { exportLikes, importLikes } from './videos';
+
+export async function run(profile?: string): Promise<void> {
 	for (const foundProfile of filterProfiles(profile)) {
 		info(`Importing likes from ${foundProfile}...`);
 		await importLikes(foundProfile);
@@ -15,7 +16,7 @@ async function run(profile?: string): Promise<void> {
 	info('Done!');
 }
 
-function check(profile?: string): void {
+export function check(profile?: string): void {
 	for (const foundProfile of filterProfiles(profile)) {
 		info(`Validating filenames (${foundProfile})...`);
 		validate(foundProfile);
@@ -24,7 +25,7 @@ function check(profile?: string): void {
 	info('Done!');
 }
 
-async function update(profile?: string): Promise<void> {
+export async function update(profile?: string): Promise<void> {
 	for (const foundProfile of filterProfiles(profile)) {
 		info(`Exporting likes into ${foundProfile}...`);
 		await exportLikes(foundProfile);
@@ -32,6 +33,3 @@ async function update(profile?: string): Promise<void> {
 
 	info('Done!');
 }
-
-export { run, update, check };
-export default { run, update, check };

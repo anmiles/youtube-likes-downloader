@@ -15,7 +15,21 @@ jobs:
   install:
     runs-on: ubuntu-latest
     container:
-      image: node:18.18
+      image: node:20.19.2-alpine
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        path: "**/node_modules"
+        key: "node_modules-${{ hashFiles('package-lock.json') }}"
+    - run: npm ci
+
+  spellcheck:
+    needs: install
+    runs-on: ubuntu-latest
+    container:
+      image: node:20.19.2-alpine
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
@@ -25,12 +39,13 @@ jobs:
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
         lookup-only: true
     - run: npm ci
+    - run: npm run spellcheck
 
   build:
     needs: install
     runs-on: ubuntu-latest
     container:
-      image: node:18.18
+      image: node:20.19.2-alpine
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
@@ -38,13 +53,20 @@ jobs:
       with:
         path: "**/node_modules"
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
+        lookup-only: true
+    - uses: actions/cache@v4
+      with:
+        path: "**/dist"
+        key: "dist-${{ hashFiles('**/*.ts', '**/*.mts') }}"
+    - run: npm ci
+    - run: cp config/sections.sample.json config/sections.json
     - run: npm run build
 
   lint:
-    needs: build
+    needs: install
     runs-on: ubuntu-latest
     container:
-      image: node:18.18
+      image: node:20.19.2-alpine
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
@@ -52,13 +74,15 @@ jobs:
       with:
         path: "**/node_modules"
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
+        lookup-only: true
+    - run: npm ci
     - run: npm run lint
 
   test:
-    needs: build
+    needs: install
     runs-on: ubuntu-latest
     container:
-      image: node:18.18
+      image: node:20.19.2-alpine
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
@@ -66,29 +90,7 @@ jobs:
       with:
         path: "**/node_modules"
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
-    - uses: actions/cache@v4
-      with:
-        path: "**/coverage"
-        key: "coverage-${{ hashFiles('package-lock.json') }}"
         lookup-only: true
+    - run: npm ci
     - run: npm run test:ci
-
-  coverage:
-    needs:
-    - lint
-    - test
-    runs-on: ubuntu-latest
-    container:
-      image: node:18.18
-    timeout-minutes: 30
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/cache@v4
-      with:
-        path: "**/node_modules"
-        key: "node_modules-${{ hashFiles('package-lock.json') }}"
-    - uses: actions/cache@v4
-      with:
-        path: "**/coverage"
-        key: "coverage-${{ hashFiles('package-lock.json') }}"
     - run: npm run test:report:coverage

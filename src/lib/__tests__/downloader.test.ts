@@ -1,48 +1,28 @@
-import fs from 'fs';
-import type path from 'path';
+import path from 'path';
+
+import '@anmiles/jest-extensions';
+import { log, warn } from '@anmiles/logger';
 import execa from 'execa';
-import logger from '@anmiles/logger';
-import paths from '../paths';
+import mockFs from 'mock-fs';
 
-import downloader from '../downloader';
+import { download, validate } from '../downloader';
+import { getDownloadArchive, getLikesFile, getOutputDir } from '../utils/paths';
 
-jest.mock<Partial<typeof fs>>('fs', () => ({
-	writeFileSync : jest.fn(),
-	existsSync    : jest.fn(),
-	renameSync    : jest.fn(),
-}));
+jest.mock('@anmiles/logger');
 
-const originalPath = jest.requireActual<typeof path>('path');
-jest.mock<Partial<typeof path>>('path', () => ({
-	resolve : jest.fn().mockImplementation((relativePath) => `/rootPath/${relativePath}`),
-	join    : jest.fn().mockImplementation((...paths: string[]) => paths.join('/')),
-	parse   : jest.fn().mockImplementation((filename: string) => originalPath.parse(filename)),
-	sep     : '/',
-}));
-
-jest.mock('execa', () => jest.fn().mockImplementation(() => ({
-	stdout : !hasStdout
-		? null
-		: {
-			pipe,
-		},
-})));
-
-jest.mock<Partial<typeof logger>>('@anmiles/logger', () => ({
-	log  : jest.fn(),
-	warn : jest.fn(),
-}));
-
-jest.mock<Partial<typeof paths>>('../paths', () => ({
-	getLikesFile       : jest.fn().mockImplementation((profile) => `${profile}.txt`),
-	getOutputDir       : jest.fn().mockImplementation((profile) => `output/${profile}`),
-	getDownloadArchive : jest.fn().mockImplementation((profile) => `${profile}.ytdlp`),
-}));
-
-const profile = 'username';
+const profile   = 'username';
+const outputDir = getOutputDir(profile);
 
 const pipe = jest.fn();
 let hasStdout: boolean;
+
+jest.mock('execa', () => jest.fn().mockImplementation(() => ({
+	stdout: !hasStdout
+		? null
+		: {
+				pipe,
+			},
+})));
 
 describe('src/lib/downloader', () => {
 	describe('download', () => {
@@ -50,30 +30,12 @@ describe('src/lib/downloader', () => {
 			hasStdout = true;
 		});
 
-		it('should get likes file', async () => {
-			await downloader.download(profile);
-
-			expect(paths.getLikesFile).toHaveBeenCalledWith(profile);
-		});
-
-		it('should get outputDir', async () => {
-			await downloader.download(profile);
-
-			expect(paths.getOutputDir).toHaveBeenCalledWith(profile);
-		});
-
-		it('should get downloadArchive', async () => {
-			await downloader.download(profile);
-
-			expect(paths.getDownloadArchive).toHaveBeenCalledWith(profile);
-		});
-
 		it('should call yt-dlp', async () => {
-			await downloader.download(profile);
+			await download(profile);
 
 			expect(execa).toHaveBeenCalledWith('yt-dlp', [
-				'--batch-file', '/rootPath/username.txt',
-				'--download-archive', '/rootPath/username.ytdlp',
+				'--batch-file', path.resolve(getLikesFile(profile)),
+				'--download-archive', path.resolve(getDownloadArchive(profile)),
 				'--output', '%(title)s [%(channel)s].%(id)s',
 				'--format-sort', 'vcodec:h264,acodec:mp3',
 				'--merge-output-format', 'mp4',
@@ -89,13 +51,13 @@ describe('src/lib/downloader', () => {
 				'--write-thumbnail',
 				'--write-description',
 				'--write-info-json',
-			], { cwd : 'output/username' });
+			], { cwd: outputDir });
 		});
 
 		it('should pipe yt-dlp stdout to process stdout if exists', async () => {
 			hasStdout = true;
 
-			await downloader.download(profile);
+			await download(profile);
 
 			expect(pipe).toHaveBeenCalledWith(process.stdout);
 		});
@@ -103,172 +65,93 @@ describe('src/lib/downloader', () => {
 		it('should not pipe yt-dlp stdout if not exists', async () => {
 			hasStdout = false;
 
-			await downloader.download(profile);
+			await download(profile);
 
 			expect(pipe).not.toHaveBeenCalledWith();
 		});
 	});
 
 	describe('validate', () => {
-		const badSymbols = '?*:<>';
-
-		const files = [
-
-			/* filename matches json */
-			{ name : 'title 1 [channel 1].id1.mp4' },
-			{ name : 'title 1 [channel 1].id1.jpg' },
-			{ name : 'title 1 [channel 1].id1.description' },
-			{
-				name : 'title 1 [channel 1].id1.info.json',
-				json : { id : 'id1', title : 'title 1', channel : 'channel 1' },
-			},
-
-			/* filename doesn't match json */
-			{ name : 'title 2 [channel 2].id2.mp4' },
-			{ name : 'title 2 [channel 2].id2.webp' },
-			{ name : 'title 2 [channel 2].id2.description' },
-			{
-				name : 'title 2 [channel 2].id2.info.json',
-				json : { id : 'id2', title : 'new title 2', channel : 'channel 2' },
-			},
-
-			/* filename matches json but contains bad symbols */
-			{ name : `title 3${badSymbols} [channel 3].id3.mp4` },
-			{ name : `title 3${badSymbols} [channel 3].id3.jpg` },
-			{ name : `title 3${badSymbols} [channel 3].id3.description` },
-			{
-				name : `title 3${badSymbols} [channel 3].id3.info.json`,
-				json : { id : 'id3', title : `title 3${badSymbols}`, channel : 'channel 3' },
-			},
-
-			/* filename doesn't contain id */
-			{ name : 'title 4 [channel 4].mp4' },
-			{ name : 'title 4 [channel 4].jpg' },
-			{ name : 'title 4 [channel 4].description' },
-			{
-				name : 'title 4 [channel 4].info.json',
-				json : { id : 'id4', title : 'title 4', channel : 'channel 4' },
-			},
-		];
-
-		let readJSONSpy: jest.SpyInstance;
-		let recurseSpy: jest.SpyInstance;
-
-		beforeAll(() => {
-			recurseSpy  = jest.spyOn(fs, 'recurse');
-			readJSONSpy = jest.spyOn(fs, 'readJSON');
-		});
-
 		beforeEach(() => {
-			// eslint-disable-next-line promise/prefer-await-to-callbacks -- allow callbacks in `fs.recurse`
-			recurseSpy.mockImplementation((outputDir: string, callback: { file : Parameters<typeof fs.recurse>[1]['file'] }) => {
-				if (callback.file) {
-					for (const file of files) {
-						// posix function is used since path.sep is mocked to '/'
-						callback.file(fs.posix.joinPath(outputDir, file.name), file.name, {} as fs.Dirent);
-					}
-				}
-			});
+			mockFs({
+				[outputDir]: {
 
-			readJSONSpy.mockImplementation((filepath: string) => {
-				const filename = filepath.split('/').pop();
-				return files.filter(({ name }) => name === filename).pop()?.json;
-			});
+					/* filename matches json */
+					['title 1 [channel 1].id1.mp4']        : '',
+					['title 1 [channel 1].id1.jpg']        : '',
+					['title 1 [channel 1].id1.description']: '',
+					['title 1 [channel 1].id1.info.json']  : JSON.stringify({ id: 'id1', title: 'title 1', channel: 'channel 1' }),
 
-			String.prototype.toFilename = function() {
-				return this.replace(badSymbols, '');
-			};
+					/* filename doesn't match json */
+					['title 2 [channel 2].id2.mp4']        : '',
+					['title 2 [channel 2].id2.webp']       : '',
+					['title 2 [channel 2].id2.description']: '',
+					['title 2 [channel 2].id2.info.json']  : JSON.stringify({ id: 'id2', title: 'new title 2', channel: 'channel 2' }),
+
+					/* filename matches json but contains bad symbols */
+					['title 3?*:<> [channel 3].id3.mp4']        : '',
+					['title 3?*:<> [channel 3].id3.jpg']        : '',
+					['title 3?*:<> [channel 3].id3.description']: '',
+					['title 3?*:<> [channel 3].id3.info.json']  : JSON.stringify({ id: 'id3', title: 'title 3?*:<>', channel: 'channel 3' }),
+
+					/* filename doesn't contain id */
+					['title 4 [channel 4].mp4']        : '',
+					['title 4 [channel 4].jpg']        : '',
+					['title 4 [channel 4].description']: '',
+					['title 4 [channel 4].info.json']  : JSON.stringify({ id: 'id4', title: 'title 4', channel: 'channel 4' }),
+				},
+			});
 		});
 
 		afterAll(() => {
-			recurseSpy.mockRestore();
-			readJSONSpy.mockRestore();
+			mockFs.restore();
 		});
 
 		it('should output files to rename', () => {
-			downloader.validate(profile);
+			validate(profile);
 
-			expect(logger.warn).toHaveBeenCalledWith('Rename');
-			expect(logger.log).toHaveBeenCalledWith('\tOld name: title 2 [channel 2].id2');
-			expect(logger.log).toHaveBeenCalledWith('\tNew name: new title 2 [channel 2].id2');
+			expect(warn).toHaveBeenCalledWith('Rename');
+			expect(log).toHaveBeenCalledWith('\tOld name: title 2 [channel 2].id2');
+			expect(log).toHaveBeenCalledWith('\tNew name: new title 2 [channel 2].id2');
 
-			expect(logger.warn).toHaveBeenCalledWith('Rename');
-			expect(logger.log).toHaveBeenCalledWith('\tOld name: title 3?*:<> [channel 3].id3');
-			expect(logger.log).toHaveBeenCalledWith('\tNew name: title 3 [channel 3].id3');
+			expect(warn).toHaveBeenCalledWith('Rename');
+			expect(log).toHaveBeenCalledWith('\tOld name: title 3?*:<> [channel 3].id3');
+			expect(log).toHaveBeenCalledWith('\tNew name: title 3 - [channel 3].id3');
 
-			expect(logger.warn).toHaveBeenCalledWith('Rename');
-			expect(logger.log).toHaveBeenCalledWith('\tOld name: title 4 [channel 4]');
-			expect(logger.log).toHaveBeenCalledWith('\tNew name: title 4 [channel 4].id4');
+			expect(warn).toHaveBeenCalledWith('Rename');
+			expect(log).toHaveBeenCalledWith('\tOld name: title 4 [channel 4]');
+			expect(log).toHaveBeenCalledWith('\tNew name: title 4 [channel 4].id4');
 		});
 
 		it('should rename files', () => {
-			downloader.validate(profile);
+			validate(profile);
 
-			/* title2 */
+			expect(outputDir).toMatchFiles({
 
-			expect(fs.renameSync).toHaveBeenCalledWith(
-				`output/${profile}/title 2 [channel 2].id2.info.json`,
-				`output/${profile}/new title 2 [channel 2].id2.info.json`,
-			);
+				/* filename matches json */
+				['output/username/title 1 [channel 1].id1.mp4']        : '',
+				['output/username/title 1 [channel 1].id1.jpg']        : '',
+				['output/username/title 1 [channel 1].id1.description']: '',
+				['output/username/title 1 [channel 1].id1.info.json']  : JSON.stringify({ id: 'id1', title: 'title 1', channel: 'channel 1' }),
 
-			expect(fs.renameSync).toHaveBeenCalledWith(
-				`output/${profile}/title 2 [channel 2].id2.description`,
-				`output/${profile}/new title 2 [channel 2].id2.description`,
-			);
+				/* filename doesn't match json */
+				['output/username/new title 2 [channel 2].id2.mp4']        : '',
+				['output/username/new title 2 [channel 2].id2.webp']       : '',
+				['output/username/new title 2 [channel 2].id2.description']: '',
+				['output/username/new title 2 [channel 2].id2.info.json']  : JSON.stringify({ id: 'id2', title: 'new title 2', channel: 'channel 2' }),
 
-			expect(fs.renameSync).toHaveBeenCalledWith(
-				`output/${profile}/title 2 [channel 2].id2.webp`,
-				`output/${profile}/new title 2 [channel 2].id2.webp`,
-			);
+				/* filename matches json but contains bad symbols */
+				['output/username/title 3 - [channel 3].id3.mp4']        : '',
+				['output/username/title 3 - [channel 3].id3.jpg']        : '',
+				['output/username/title 3 - [channel 3].id3.description']: '',
+				['output/username/title 3 - [channel 3].id3.info.json']  : JSON.stringify({ id: 'id3', title: 'title 3?*:<>', channel: 'channel 3' }),
 
-			expect(fs.renameSync).toHaveBeenCalledWith(
-				`output/${profile}/title 2 [channel 2].id2.mp4`,
-				`output/${profile}/new title 2 [channel 2].id2.mp4`,
-			);
-
-			/* title3 */
-
-			expect(fs.renameSync).toHaveBeenCalledWith(
-				`output/${profile}/title 3?*:<> [channel 3].id3.info.json`,
-				`output/${profile}/title 3 [channel 3].id3.info.json`,
-			);
-
-			expect(fs.renameSync).toHaveBeenCalledWith(
-				`output/${profile}/title 3?*:<> [channel 3].id3.description`,
-				`output/${profile}/title 3 [channel 3].id3.description`,
-			);
-
-			expect(fs.renameSync).toHaveBeenCalledWith(
-				`output/${profile}/title 3?*:<> [channel 3].id3.jpg`,
-				`output/${profile}/title 3 [channel 3].id3.jpg`,
-			);
-
-			expect(fs.renameSync).toHaveBeenCalledWith(
-				`output/${profile}/title 3?*:<> [channel 3].id3.mp4`,
-				`output/${profile}/title 3 [channel 3].id3.mp4`,
-			);
-
-			/* title4 */
-
-			expect(fs.renameSync).toHaveBeenCalledWith(
-				`output/${profile}/title 4 [channel 4].info.json`,
-				`output/${profile}/title 4 [channel 4].id4.info.json`,
-			);
-
-			expect(fs.renameSync).toHaveBeenCalledWith(
-				`output/${profile}/title 4 [channel 4].description`,
-				`output/${profile}/title 4 [channel 4].id4.description`,
-			);
-
-			expect(fs.renameSync).toHaveBeenCalledWith(
-				`output/${profile}/title 4 [channel 4].jpg`,
-				`output/${profile}/title 4 [channel 4].id4.jpg`,
-			);
-
-			expect(fs.renameSync).toHaveBeenCalledWith(
-				`output/${profile}/title 4 [channel 4].mp4`,
-				`output/${profile}/title 4 [channel 4].id4.mp4`,
-			);
+				/* filename doesn't contain id */
+				['output/username/title 4 [channel 4].id4.mp4']        : '',
+				['output/username/title 4 [channel 4].id4.jpg']        : '',
+				['output/username/title 4 [channel 4].id4.description']: '',
+				['output/username/title 4 [channel 4].id4.info.json']  : JSON.stringify({ id: 'id4', title: 'title 4', channel: 'channel 4' }),
+			});
 		});
 	});
 });

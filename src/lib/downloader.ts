@@ -1,20 +1,22 @@
-import path from 'path';
 import fs from 'fs';
-import execa from 'execa';
+import path from 'path';
+
 import { log, warn } from '@anmiles/logger';
-import { getLikesFile, getOutputDir, getDownloadArchive } from './paths';
 import '@anmiles/prototypes';
+import execa from 'execa';
+
+import { getDownloadArchive, getLikesFile, getOutputDir } from './utils/paths';
 
 interface VideoInfo {
-	id      : string;
-	title   : string;
-	channel : string;
+	id: string;
+	title: string;
+	channel: string;
 }
 
 const executable = 'yt-dlp';
 
 const flags = [
-	'--output', formatTitle({ id : '%(id)s', title : '%(title)s', channel : '%(channel)s' }),
+	'--output', formatTitle({ id: '%(id)s', title: '%(title)s', channel: '%(channel)s' }),
 	'--format-sort', 'vcodec:h264,acodec:mp3',
 	'--merge-output-format', 'mp4',
 	'--sponsorblock-remove', 'sponsor',
@@ -35,10 +37,14 @@ function formatTitle({ id, title, channel }: VideoInfo): string {
 	return `${title} [${channel}].${id}`;
 }
 
-async function download(profile: string): Promise<execa.ExecaChildProcess> {
-	const likesFile       = getLikesFile(profile);
+export async function download(profile: string): Promise<execa.ExecaChildProcess> {
 	const outputDir       = getOutputDir(profile);
+	const likesFile       = getLikesFile(profile);
 	const downloadArchive = getDownloadArchive(profile);
+
+	fs.ensureDir(outputDir, { create: true });
+	fs.ensureFile(likesFile, { create: true });
+	fs.ensureFile(downloadArchive, { create: true });
 
 	const args = [
 		'--batch-file', path.resolve(likesFile),
@@ -46,16 +52,17 @@ async function download(profile: string): Promise<execa.ExecaChildProcess> {
 		...flags,
 	];
 
-	const proc = execa(executable, args, { cwd : outputDir });
+	const proc = execa(executable, args, { cwd: outputDir });
 	proc.stdout?.pipe(process.stdout);
 	return proc;
 }
 
-function validate(profile: string): void {
+export function validate(profile: string): void {
 	const outputDir = getOutputDir(profile);
-	const allFiles  = {} as Record<string, { exts : string[]; newName : string | undefined }>;
+	fs.ensureDir(outputDir, { create: true });
+	const allFiles = {} as Record<string, { exts: string[]; newName: string | undefined }>;
 
-	fs.recurse(outputDir, { file : (filepath, filename) => {
+	fs.recurse(outputDir, { file: (filepath, filename) => {
 		let { name, ext } = path.parse(filename);
 
 		if (ext === '.json') {
@@ -63,7 +70,7 @@ function validate(profile: string): void {
 			ext  = `.info${ext}`;
 		}
 
-		const file = allFiles[name] ??= { exts : [], newName : undefined };
+		const file = allFiles[name] ??= { exts: [], newName: undefined };
 		file.exts.push(ext);
 
 		if (ext === '.info.json') {
@@ -71,7 +78,7 @@ function validate(profile: string): void {
 			const title  = formatTitle(json);
 			file.newName = title.toFilename();
 		}
-	} }, { depth : 1 });
+	} }, { depth: 1 });
 
 	Object.entries(allFiles).forEach(([ name, { exts, newName } ]) => {
 		if (name !== newName) {
@@ -87,6 +94,3 @@ function validate(profile: string): void {
 		}
 	});
 }
-
-export { download, validate };
-export default { download, validate };

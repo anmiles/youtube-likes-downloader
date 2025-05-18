@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 
-import { error } from '@anmiles/logger';
 import { login } from '@anmiles/google-api-wrapper';
+import { error } from '@anmiles/logger';
 
 login(process.argv[2])
 	.catch((ex: unknown) => {

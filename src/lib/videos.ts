@@ -1,12 +1,13 @@
 import fs from 'fs';
-import type GoogleApis from 'googleapis';
-import { youtube } from 'googleapis/build/src/apis/youtube';
+
 import { getAPI } from '@anmiles/google-api-wrapper';
 import { log, warn } from '@anmiles/logger';
-import { getLikesFile, getIncludeLikesFile } from './paths';
 import '@anmiles/prototypes';
+import type GoogleApis from 'googleapis';
+import { youtube } from 'googleapis/build/src/apis/youtube';
+import { z } from 'zod';
 
-import videos from './videos';
+import { getIncludeLikesFile, getLikesFile } from './utils/paths';
 
 const urlPrefix = 'https://www.youtube.com/watch?v=';
 
@@ -14,15 +15,28 @@ const fullScopes = [
 	'https://www.googleapis.com/auth/youtube',
 ];
 
-async function importLikes(profile: string): Promise<void> {
+const commonErrorSchema = z.object({
+	errors: z.null().or(z.array(z.unknown())),
+});
+
+const errorSchema = z.object({
+	errors: z.array(
+		z.object({
+			reason : z.string().optional(),
+			message: z.string().optional(),
+		}),
+	),
+});
+
+export async function importLikes(profile: string): Promise<void> {
 	const likesFile        = getLikesFile(profile);
 	const includeLikesFile = getIncludeLikesFile(profile);
 
-	const youtubeAPI          = await getAPI((auth) => youtube({ version : 'v3', auth }), profile);
-	const videosList          = await youtubeAPI.getItems((api) => api.playlistItems, { playlistId : 'LL', part : [ 'snippet' ], maxResults : 50 });
+	const youtubeAPI          = await getAPI((auth) => youtube({ version: 'v3', auth }), profile);
+	const videosList          = await youtubeAPI.getItems((api) => api.playlistItems, { playlistId: 'LL', part: [ 'snippet' ], maxResults: 50 });
 	const likesData: string[] = [];
 
-	likesData.push(videosList.map(videos.formatVideo).join('\n\n'));
+	likesData.push(videosList.map(formatVideo).join('\n\n'));
 
 	if (fs.existsSync(includeLikesFile)) {
 		likesData.push(fs.readFileSync(includeLikesFile).toString());
@@ -32,9 +46,9 @@ async function importLikes(profile: string): Promise<void> {
 	fs.writeFileSync(likesFile, allLikesData);
 }
 
-async function exportLikes(profile: string): Promise<void> {
-	const youtubeAPI = await getAPI((auth) => youtube({ version : 'v3', auth }), profile, { temporary : true, scopes : fullScopes });
-	const videosList = await youtubeAPI.getItems((api) => api.playlistItems, { playlistId : 'LL', part : [ 'snippet' ], maxResults : 50 });
+export async function exportLikes(profile: string): Promise<void> {
+	const youtubeAPI = await getAPI((auth) => youtube({ version: 'v3', auth }), profile, { temporary: true, scopes: fullScopes });
+	const videosList = await youtubeAPI.getItems((api) => api.playlistItems, { playlistId: 'LL', part: [ 'snippet' ], maxResults: 50 });
 
 	/* istanbul ignore next */
 	const existingIDs = videosList.map((video) => video.snippet?.resourceId?.videoId ?? 'unknown');
@@ -58,10 +72,14 @@ async function exportLikes(profile: string): Promise<void> {
 		try {
 			await youtubeAPI.api!.videos.rate({ id, rating });
 		} catch (ex: unknown) {
-			if (typeof ex === 'object' && ex && 'errors' in ex) {
-				if (Array.isArray(ex.errors) && ex.errors.length > 0) {
-					const firstError = ex.errors[0] as { reason : string; message : string };
+			const commonError = commonErrorSchema.safeParse(ex).data;
 
+			if (ex instanceof Error || !commonError) {
+				throw ex;
+			} else {
+				const firstError = errorSchema.safeParse(ex).data?.errors[0];
+
+				if (firstError) {
 					switch (firstError.reason) {
 						case 'videoNotFound':
 						case 'notFound':
@@ -73,12 +91,11 @@ async function exportLikes(profile: string): Promise<void> {
 							warn(`Video ${id} is not allowed to be rated`);
 							break;
 
+						case undefined:
 						default:
 							throw ex as unknown;
 					}
 				}
-			} else {
-				throw ex;
 			}
 		}
 	}
@@ -94,6 +111,3 @@ function parseVideos(videosData: string): string[] {
 	const matches = [ ...videosData.matchAll(regex) ];
 	return matches.map((match) => match[1]!);
 }
-
-export { importLikes, exportLikes };
-export default { importLikes, exportLikes, formatVideo, parseVideos };

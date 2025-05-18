@@ -41,9 +41,9 @@ This will never re-download already download ones, just add newly liked ones.
 File names are being checked for validity (and renamed if needed).
 
 1. Automatic download by schedule
-    - Schedule task that will run `npm start` periodically
+	- Schedule task that will run `npm start` periodically
 1. Manual download
-    - Run `npm start` manually. If needed, it will interact with you to retrieve credentials if you still didn't run `npm run login` in advance
+	- Run `npm start` manually. If needed, it will interact with you to retrieve credentials if you still didn't run `npm run login` in advance
 
 ## Validating
 
@@ -56,6 +56,6 @@ File names are being checked for validity (and renamed if needed).
 - `npm run update <profile>` will update likes playlist for selected profile
 
 Likes will be exported in reversed order because likes playlist is ordered "newest first". Existing likes won't be affected. This might be useful for copying likes from one profile to another:
-  - run `npm start <profile1>` to get likes imported from selected profile
-  - copy likes file to another one using name of another profile
-  - run `npm run update <profile2>` to export likes into another profile
+- run `npm start <profile1>` to get likes imported from selected profile
+- copy likes file to another one using name of another profile
+- run `npm run update <profile2>` to export likes into another profile
