@@ -27,7 +27,6 @@ const flags = [
 	'--no-part',
 	'--continue',
 	'--abort-on-error',
-	'--verbose',
 	'--write-thumbnail',
 	'--write-description',
 	'--write-info-json',
@@ -54,7 +53,21 @@ export async function download(profile: string): Promise<execa.ExecaChildProcess
 
 	const proc = execa(executable, args, { cwd: outputDir });
 	proc.stdout?.pipe(process.stdout);
-	return proc;
+
+	const errors: string[] = [];
+	proc.stderr?.on('data', (data) => {
+		const text = data.toString('utf8');
+		errors.push(text);
+		process.stderr.write(data);
+	});
+
+	const result = await proc;
+
+	if (errors.length > 0) {
+		throw new Error(errors.join('\n'));
+	}
+
+	return result;
 }
 
 export function validate(profile: string): void {

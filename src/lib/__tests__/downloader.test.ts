@@ -1,6 +1,8 @@
+import EventEmitter from 'events';
 import path from 'path';
-
 import '@anmiles/jest-extensions';
+import type { Readable } from 'stream';
+
 import { log, warn } from '@anmiles/logger';
 import execa from 'execa';
 import mockFs from 'mock-fs';
@@ -9,25 +11,24 @@ import { download, validate } from '../downloader';
 import { getDownloadArchive, getLikesFile, getOutputDir } from '../utils/paths';
 
 jest.mock('@anmiles/logger');
+jest.mock('execa');
 
 const profile   = 'username';
 const outputDir = getOutputDir(profile);
 
 const pipe = jest.fn();
-let hasStdout: boolean;
 
-jest.mock('execa', () => jest.fn().mockImplementation(() => ({
-	stdout: !hasStdout
-		? null
-		: {
-				pipe,
-			},
-})));
+let stdout: Readable | null;
+let stderr: Readable | null;
+
+// eslint-disable-next-line @typescript-eslint/promise-function-async
+jest.mock('execa', () => jest.fn().mockImplementation(() => Object.assign(Promise.resolve(), { stdout, stderr })));
 
 describe('src/lib/downloader', () => {
 	describe('download', () => {
 		beforeEach(() => {
-			hasStdout = true;
+			stdout = { pipe } as unknown as typeof stdout; // eslint-disable-line @typescript-eslint/no-unsafe-type-assertion
+			stderr = new EventEmitter() as unknown as typeof stderr; // eslint-disable-line @typescript-eslint/no-unsafe-type-assertion
 		});
 
 		it('should call yt-dlp', async () => {
@@ -47,7 +48,6 @@ describe('src/lib/downloader', () => {
 				'--no-part',
 				'--continue',
 				'--abort-on-error',
-				'--verbose',
 				'--write-thumbnail',
 				'--write-description',
 				'--write-info-json',
@@ -55,19 +55,26 @@ describe('src/lib/downloader', () => {
 		});
 
 		it('should pipe yt-dlp stdout to process stdout if exists', async () => {
-			hasStdout = true;
-
 			await download(profile);
 
 			expect(pipe).toHaveBeenCalledWith(process.stdout);
 		});
 
 		it('should not pipe yt-dlp stdout if not exists', async () => {
-			hasStdout = false;
+			stdout = null;
 
 			await download(profile);
 
 			expect(pipe).not.toHaveBeenCalledWith();
+		});
+
+		it('should throw if stderr had received a data', async () => {
+			const promise = download(profile);
+
+			stderr?.emit('data', 'Test error 1');
+			stderr?.emit('data', 'Test error 2');
+
+			await expect(promise).rejects.toEqual(new Error('Test error 1\nTest error 2'));
 		});
 	});
 
