@@ -70,7 +70,7 @@ export async function exportLikes(profile: string): Promise<void> {
 		}
 
 		try {
-			await youtubeAPI.api!.videos.rate({ id, rating });
+			await youtubeAPI.api.videos.rate({ id, rating });
 		} catch (ex: unknown) {
 			const commonError = commonErrorSchema.safeParse(ex).data;
 
