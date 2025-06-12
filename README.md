@@ -45,6 +45,10 @@ File names are being checked for validity (and renamed if needed).
 1. Manual download
 	- Run `npm start` manually. If needed, it will interact with you to retrieve credentials if you still didn't run `npm run login` in advance
 
+## Adding manually
+
+- `npm add <profile>` to manually add video that cannot be downloaded by this app. Video should be downloaded in other way, this command just creates all needed files in output directory.
+
 ## Validating
 
 - `npm run check` to just validate all filenames

@@ -1,17 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 
-import { log, warn } from '@anmiles/logger';
 import '@anmiles/prototypes';
 import execa from 'execa';
 
+import { formatTitle } from './utils/formatTitle';
 import { getDownloadArchive, getLikesFile, getOutputDir } from './utils/paths';
-
-interface VideoInfo {
-	id: string;
-	title: string;
-	channel: string;
-}
 
 const executable = 'yt-dlp';
 
@@ -31,10 +25,6 @@ const flags = [
 	'--write-description',
 	'--write-info-json',
 ];
-
-function formatTitle({ id, title, channel }: VideoInfo): string {
-	return `${title} [${channel}].${id}`;
-}
 
 export async function download(profile: string): Promise<execa.ExecaChildProcess> {
 	const outputDir       = getOutputDir(profile);
@@ -70,40 +60,3 @@ export async function download(profile: string): Promise<execa.ExecaChildProcess
 	return result;
 }
 
-export function validate(profile: string): void {
-	const outputDir = getOutputDir(profile);
-	fs.ensureDir(outputDir, { create: true });
-	const allFiles = {} as Record<string, { exts: string[]; newName: string | undefined }>;
-
-	fs.recurse(outputDir, { file: (filepath, filename) => {
-		let { name, ext } = path.parse(filename);
-
-		if (ext === '.json') {
-			name = name.replace(/\.info$/, '');
-			ext  = `.info${ext}`;
-		}
-
-		const file = allFiles[name] ??= { exts: [], newName: undefined };
-		file.exts.push(ext);
-
-		if (ext === '.info.json') {
-			const json   = fs.readJSON<VideoInfo>(filepath);
-			const title  = formatTitle(json);
-			file.newName = title.toFilename();
-		}
-	} }, { depth: 1 });
-
-	Object.entries(allFiles).forEach(([ name, { exts, newName } ]) => {
-		if (name !== newName) {
-			warn('Rename');
-			log(`\tOld name: ${name}`);
-			log(`\tNew name: ${newName}`);
-
-			for (const ext of exts) {
-				const oldFile = path.join(outputDir, `${name}${ext}`);
-				const newFile = path.join(outputDir, `${newName}${ext}`);
-				fs.renameSync(oldFile, newFile);
-			}
-		}
-	});
-}

@@ -28,6 +28,7 @@
 		"test:report:coverage": "nyc report",
 		"start": "node ./dist/index.js",
 		"check": "node ./dist/check.js",
+		"add": "node ./dist/add.js",
 		"update": "node ./dist/update.js",
 		"create": "node ./dist/create.js",
 		"login": "node ./dist/login.js"
@@ -35,14 +36,17 @@
 	"dependencies": {
 		"@anmiles/google-api-wrapper": "^19.0.4",
 		"@anmiles/logger": "^8.0.0",
-		"@anmiles/prototypes": "^11.0.0",
+		"@anmiles/prototypes": "^11.1.0",
+		"@anmiles/zod-tools": "^1.0.0",
+		"colorette": "^2.0.20",
 		"execa": "^5.1.1",
 		"googleapis": "^148.0.0",
+		"readline": "^1.3.0",
 		"zod": "^3.24.4"
 	},
 	"devDependencies": {
 		"@anmiles/eslint-config": "^9.0.0",
-		"@anmiles/jest-extensions": "^6.0.0",
+		"@anmiles/jest-extensions": "^6.1.1",
 		"@anmiles/tsconfig": "^4.0.0",
 		"@eslint/compat": "^1.2.9",
 		"@eslint/css": "^0.8.1",

@@ -3,30 +3,13 @@ import fs from 'fs';
 import { getAPI } from '@anmiles/google-api-wrapper';
 import { log, warn } from '@anmiles/logger';
 import '@anmiles/prototypes';
-import type GoogleApis from 'googleapis';
 import { youtube } from 'googleapis/build/src/apis/youtube';
-import { z } from 'zod';
 
+import { config } from './config';
+import { commonErrorSchema, errorSchema } from './types/schema';
+import { formatVideo } from './utils/formatVideo';
+import { parseVideos } from './utils/parseVideos';
 import { getIncludeLikesFile, getLikesFile } from './utils/paths';
-
-const urlPrefix = 'https://www.youtube.com/watch?v=';
-
-const fullScopes = [
-	'https://www.googleapis.com/auth/youtube',
-];
-
-const commonErrorSchema = z.object({
-	errors: z.null().or(z.array(z.unknown())),
-});
-
-const errorSchema = z.object({
-	errors: z.array(
-		z.object({
-			reason : z.string().optional(),
-			message: z.string().optional(),
-		}),
-	),
-});
 
 export async function importLikes(profile: string): Promise<void> {
 	const likesFile        = getLikesFile(profile);
@@ -47,7 +30,7 @@ export async function importLikes(profile: string): Promise<void> {
 }
 
 export async function exportLikes(profile: string): Promise<void> {
-	const youtubeAPI = await getAPI((auth) => youtube({ version: 'v3', auth }), profile, { temporary: true, scopes: fullScopes });
+	const youtubeAPI = await getAPI((auth) => youtube({ version: 'v3', auth }), profile, { temporary: true, scopes: config.scopes.full });
 	const videosList = await youtubeAPI.getItems((api) => api.playlistItems, { playlistId: 'LL', part: [ 'snippet' ], maxResults: 50 });
 
 	/* istanbul ignore next */
@@ -101,13 +84,3 @@ export async function exportLikes(profile: string): Promise<void> {
 	}
 }
 
-function formatVideo(video: GoogleApis.youtube_v3.Schema$PlaylistItem): string {
-	/* istanbul ignore next */
-	return [ `# ${video.snippet?.title ?? 'Unknown'}`, `${urlPrefix}${video.snippet?.resourceId?.videoId ?? 'unknown'}` ].join('\n');
-}
-
-function parseVideos(videosData: string): string[] {
-	const regex   = new RegExp(`${urlPrefix.regexEscape()}([A-Za-z0-9_-]+)`, 'g');
-	const matches = [ ...videosData.matchAll(regex) ];
-	return matches.map((match) => match[1]!);
-}

@@ -1,8 +1,10 @@
 import { filterProfiles } from '@anmiles/google-api-wrapper';
 import { info } from '@anmiles/logger';
 
-import { download, validate } from './downloader';
-import { exportLikes, importLikes } from './videos';
+import { addVideo } from './addVideo';
+import { download } from './download';
+import { exportLikes, importLikes } from './likes';
+import { validate } from './validate';
 
 export async function run(profile?: string): Promise<void> {
 	for (const foundProfile of filterProfiles(profile)) {
@@ -29,6 +31,19 @@ export async function update(profile?: string): Promise<void> {
 	for (const foundProfile of filterProfiles(profile)) {
 		info(`Exporting likes into ${foundProfile}...`);
 		await exportLikes(foundProfile);
+	}
+
+	info('Done!');
+}
+
+export async function add(profile?: string): Promise<void> {
+	if (!profile) {
+		throw new Error('Video should be added to the particular profile; specify it as `npm add <profile>`');
+	}
+
+	for (const foundProfile of filterProfiles(profile)) {
+		info(`Adding video for ${foundProfile}...`);
+		await addVideo(foundProfile);
 	}
 
 	info('Done!');

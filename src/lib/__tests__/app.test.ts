@@ -1,14 +1,18 @@
 import { filterProfiles } from '@anmiles/google-api-wrapper';
 import { info } from '@anmiles/logger';
 
-import { check, run, update } from '../app';
-import { download, validate } from '../downloader';
-import { exportLikes, importLikes } from '../videos';
+import { addVideo } from '../addVideo';
+import { add, check, run, update } from '../app';
+import { download } from '../download';
+import { exportLikes, importLikes } from '../likes';
+import { validate } from '../validate';
 
 jest.mock('@anmiles/google-api-wrapper');
 jest.mock('@anmiles/logger');
-jest.mock('../downloader');
-jest.mock('../videos');
+jest.mock('../addVideo');
+jest.mock('../download');
+jest.mock('../likes');
+jest.mock('../validate');
 
 const profile1 = 'username1';
 const profile2 = 'username2';
@@ -92,6 +96,31 @@ describe('src/lib/app', () => {
 
 			expect(exportLikes).toHaveBeenCalledWith(profile1);
 			expect(exportLikes).toHaveBeenCalledWith(profile2);
+		});
+	});
+
+	describe('addVideo', () => {
+		it('should filter profiles', async () => {
+			await add(profile1);
+
+			expect(filterProfiles).toHaveBeenCalledWith(profile1);
+		});
+
+		it('should throw if no profiles specified', async () => {
+			await expect(add('')).rejects.toThrow(new Error('Video should be added to the particular profile; specify it as `npm add <profile>`'));
+		});
+
+		it('should output info', async () => {
+			await add(profile1);
+
+			expect(info).toHaveBeenCalledWith(`Adding video for ${profile1}...`);
+			expect(info).toHaveBeenCalledWith('Done!');
+		});
+
+		it('should add video for selected profile', async () => {
+			await add(profile1);
+
+			expect(addVideo).toHaveBeenCalledWith(profile1);
 		});
 	});
 });
