@@ -22,7 +22,7 @@
 		"lint:fix": "eslint --fix",
 		"test": "jest --verbose",
 		"test:coverage": "npm test -- --coverage",
-		"test:ci": "npm test -- --ci --coverage --runInBand --maxWorkers=2",
+		"test:ci": "npm test -- --ci --coverage --maxWorkers 2",
 		"test:watch": "npm test -- --watch",
 		"test:watch:coverage": "npm test -- --watch --coverage",
 		"test:report:coverage": "nyc report",

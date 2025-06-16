@@ -88,6 +88,10 @@ beforeEach(() => {
 	});
 });
 
+afterAll(() => {
+	mockFs.restore();
+});
+
 describe('src/lib/likes', () => {
 	describe('importLikes', () => {
 
