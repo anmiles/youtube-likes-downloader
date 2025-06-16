@@ -92,5 +92,5 @@ jobs:
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
         lookup-only: true
     - run: ls src/lib/__tests__; npm ci; ls src/lib/__tests__
-    - run: ls src/lib/__tests__; jest --ci --coverage --detectOpenHandles --verbose; ls src/lib/__tests__
+    - run: ls src/lib/__tests__; npx jest --ci --coverage --detectOpenHandles --verbose; ls src/lib/__tests__
     - run: npm run test:report:coverage
