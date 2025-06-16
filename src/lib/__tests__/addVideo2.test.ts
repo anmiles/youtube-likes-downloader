@@ -1,167 +1,78 @@
-import fs from 'fs';
-import type { Interface } from 'readline';
-import { createInterface } from 'readline';
+import EventEmitter from 'events';
+import path from 'path';
+import '@anmiles/jest-extensions';
+import type { Readable } from 'stream';
 
-import { mockPartial } from '@anmiles/jest-extensions';
-import { error } from '@anmiles/logger';
-import { validate } from '@anmiles/zod-tools';
-import mockFs from 'mock-fs';
-import z from 'zod';
+import execa from 'execa';
 
-import { addVideo } from '../addVideo';
-import { getDownloadArchive, getOutputDir } from '../utils/paths';
-
-import { SequentialArray } from './testUtils/sequentialArray';
+import { download } from '../download';
+import { getDownloadArchive, getLikesFile, getOutputDir } from '../utils/paths';
 
 jest.mock('@anmiles/logger');
-jest.mock('readline');
+jest.mock('execa');
 
-jest.mock('colorette', () => new Proxy({}, {
-	get: () => (str: string) => str,
-}));
+const profile   = 'username';
+const outputDir = getOutputDir(profile);
 
-const profile         = 'username';
-const videoFile       = 'test/video.mp4';
-const imageFile       = 'test/poster.jpg';
-const descriptionFile = 'test/description.txt';
+const pipe = jest.fn();
 
-const questions = [
-	'Youtube link: ',
-	'Channel: ',
-	'Title: ',
-	'Duration: ',
-	'Resolution: ',
-	'Video file: ',
-	'Image file: ',
-	'Description file: ',
-] as const;
+let stdout: Readable | null;
+let stderr: Readable | null;
 
-const questionsSchema = z.enum(questions);
-const outputDir       = getOutputDir(profile);
+// eslint-disable-next-line @typescript-eslint/promise-function-async
+jest.mock('execa', () => jest.fn().mockImplementation(() => Object.assign(Promise.resolve(), { stdout, stderr })));
 
-const expectedFiles: Record<string, string> = {
-	['output/username/First movie - beginning pilot version [Test channel].video_c3.mp4']        : 'video',
-	['output/username/First movie - beginning pilot version [Test channel].video_c3.jpg']        : 'image',
-	['output/username/First movie - beginning pilot version [Test channel].video_c3.description']: 'description',
-	['output/username/First movie - beginning pilot version [Test channel].video_c3.info.json']  : JSON.stringify({
-		id             : 'video_c3',
-		title          : 'First movie: beginning <pilot version>',
-		channel        : 'Test channel',
-		ext            : 'mp4',
-		width          : 1280,
-		height         : 720,
-		resolution     : '1280x720',
-		duration_string: '01:30:00', // eslint-disable-line camelcase
-	}),
-};
-
-let answers: Record<typeof questions[number], SequentialArray<string>>;
-
-const readlineInterface = mockPartial<Interface>({
-	question: jest.fn().mockImplementation((question: string, resolve: (answer: string)=> void) => {
-		const validQuestion = validate(question, questionsSchema);
-		const answer        = answers[validQuestion].next();
-
-		if (typeof answer === 'undefined') {
-			throw new Error(`Question '${question}' has no more answers`);
-		}
-
-		resolve(answer);
-	}),
-
-	close: jest.fn(),
-});
-
-jest.mocked(createInterface).mockReturnValue(readlineInterface);
-
-beforeEach(() => {
-	mockFs({
-		[videoFile]                  : 'video',
-		[imageFile]                  : 'image',
-		[descriptionFile]            : 'description',
-		[getDownloadArchive(profile)]: 'youtube video_a1\nyoutube video_b2\n',
-	});
-
-	answers = {
-		'Youtube link: '    : new SequentialArray([ 'https://www.youtube.com/watch?v=video_c3' ]),
-		'Channel: '         : new SequentialArray([ 'Test channel' ]),
-		'Title: '           : new SequentialArray([ 'First movie: beginning <pilot version>' ]),
-		'Duration: '        : new SequentialArray([ '01:30:00' ]),
-		'Resolution: '      : new SequentialArray([ '1280x720' ]),
-		'Video file: '      : new SequentialArray([ videoFile ]),
-		'Image file: '      : new SequentialArray([ imageFile ]),
-		'Description file: ': new SequentialArray([ descriptionFile ]),
-	};
-});
-
-describe('src/lib/addVideo', () => {
-	describe('addVideo', () => {
-		it('should generate files', async () => {
-			await addVideo(profile);
-
-			expect(outputDir).toMatchFiles(expectedFiles);
+describe('src/lib/download', () => {
+	describe('download', () => {
+		beforeEach(() => {
+			stdout = { pipe } as unknown as typeof stdout; // eslint-disable-line @typescript-eslint/no-unsafe-type-assertion
+			stderr = new EventEmitter() as unknown as typeof stderr; // eslint-disable-line @typescript-eslint/no-unsafe-type-assertion
 		});
 
-		it('should add downloaded ID to the archive', async () => {
-			await addVideo(profile);
+		it('should call yt-dlp', async () => {
+			await download(profile);
 
-			const downloadArchive = (await fs.promises.readFile(getDownloadArchive(profile))).toString();
-
-			expect(downloadArchive).toEqual('youtube video_a1\nyoutube video_b2\nyoutube video_c3\n');
+			expect(execa).toHaveBeenCalledWith('yt-dlp', [
+				'--batch-file', path.resolve(getLikesFile(profile)),
+				'--download-archive', path.resolve(getDownloadArchive(profile)),
+				'--output', '%(title)s [%(channel)s].%(id)s',
+				'--format-sort', 'vcodec:h264,acodec:mp3',
+				'--merge-output-format', 'mp4',
+				'--sponsorblock-remove', 'sponsor',
+				'--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36',
+				'--geo-bypass',
+				'--no-playlist',
+				'--no-overwrites',
+				'--no-part',
+				'--continue',
+				'--abort-on-error',
+				'--write-thumbnail',
+				'--write-description',
+				'--write-info-json',
+			], { cwd: outputDir });
 		});
 
-		it('should output error if youtube link is not valid', async () => {
-			answers['Youtube link: '] = new SequentialArray([ 'wrong link', 'https://www.youtube.com/watch?v=video_c3' ]);
+		it('should pipe yt-dlp stdout to process stdout if exists', async () => {
+			await download(profile);
 
-			await addVideo(profile);
-
-			expect(error).toHaveBeenCalledWith(new Error('Youtube link should be in the format https://www.youtube.com/watch?v=...'));
-			expect(outputDir).toMatchFiles(expectedFiles);
+			expect(pipe).toHaveBeenCalledWith(process.stdout);
 		});
 
-		it('should output error if duration is not valid', async () => {
-			answers['Duration: '] = new SequentialArray([ 'wrong duration', '01:30:00' ]);
+		it('should not pipe yt-dlp stdout if not exists', async () => {
+			stdout = null;
 
-			await addVideo(profile);
+			await download(profile);
 
-			expect(error).toHaveBeenCalledWith(new Error('Duration should be in the format <min>:<sec> or <hour>:<min>:<sec>'));
-			expect(outputDir).toMatchFiles(expectedFiles);
+			expect(pipe).not.toHaveBeenCalledWith();
 		});
 
-		it('should output error if resolution is not valid', async () => {
-			answers['Resolution: '] = new SequentialArray([ 'wrong resolution', '1280x720' ]);
+		it('should throw if stderr had received a data', async () => {
+			const promise = download(profile);
 
-			await addVideo(profile);
+			stderr?.emit('data', 'Test error 1');
+			stderr?.emit('data', 'Test error 2');
 
-			expect(error).toHaveBeenCalledWith(new Error('Resolution should be in the format <width>x<height>'));
-			expect(outputDir).toMatchFiles(expectedFiles);
-		});
-
-		it('should output error if video file does not exist', async () => {
-			answers['Video file: '] = new SequentialArray([ 'wrong file', videoFile ]);
-
-			await addVideo(profile);
-
-			expect(error).toHaveBeenCalledWith(new Error('File not exists'));
-			expect(outputDir).toMatchFiles(expectedFiles);
-		});
-
-		it('should output error if image file does not exist', async () => {
-			answers['Image file: '] = new SequentialArray([ 'wrong file', imageFile ]);
-
-			await addVideo(profile);
-
-			expect(error).toHaveBeenCalledWith(new Error('File not exists'));
-			expect(outputDir).toMatchFiles(expectedFiles);
-		});
-
-		it('should output error if description file does not exist', async () => {
-			answers['Description file: '] = new SequentialArray([ 'wrong file', descriptionFile ]);
-
-			await addVideo(profile);
-
-			expect(error).toHaveBeenCalledWith(new Error('File not exists'));
-			expect(outputDir).toMatchFiles(expectedFiles);
+			await expect(promise).rejects.toEqual(new Error('Test error 1\nTest error 2'));
 		});
 	});
 });
