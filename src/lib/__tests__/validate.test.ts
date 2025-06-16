@@ -11,43 +11,44 @@ jest.mock('execa');
 
 const profile   = 'username';
 const outputDir = getOutputDir(profile);
+
+beforeEach(() => {
+	mockFs({
+		[outputDir]: {
+
+			/* filename matches json */
+			['title 1 [channel 1].id1.mp4']        : '',
+			['title 1 [channel 1].id1.jpg']        : '',
+			['title 1 [channel 1].id1.description']: '',
+			['title 1 [channel 1].id1.info.json']  : JSON.stringify({ id: 'id1', title: 'title 1', channel: 'channel 1' }),
+
+			/* filename doesn't match json */
+			['title 2 [channel 2].id2.mp4']        : '',
+			['title 2 [channel 2].id2.webp']       : '',
+			['title 2 [channel 2].id2.description']: '',
+			['title 2 [channel 2].id2.info.json']  : JSON.stringify({ id: 'id2', title: 'new title 2', channel: 'channel 2' }),
+
+			/* filename matches json but contains bad symbols */
+			['title 3?*:<> [channel 3].id3.mp4']        : '',
+			['title 3?*:<> [channel 3].id3.jpg']        : '',
+			['title 3?*:<> [channel 3].id3.description']: '',
+			['title 3?*:<> [channel 3].id3.info.json']  : JSON.stringify({ id: 'id3', title: 'title 3?*:<>', channel: 'channel 3' }),
+
+			/* filename doesn't contain id */
+			['title 4 [channel 4].mp4']        : '',
+			['title 4 [channel 4].jpg']        : '',
+			['title 4 [channel 4].description']: '',
+			['title 4 [channel 4].info.json']  : JSON.stringify({ id: 'id4', title: 'title 4', channel: 'channel 4' }),
+		},
+	});
+});
+
+afterAll(() => {
+	mockFs.restore();
+});
+
 describe('src/lib/validate', () => {
 	describe('validate', () => {
-		beforeEach(() => {
-			mockFs({
-				[outputDir]: {
-
-					/* filename matches json */
-					['title 1 [channel 1].id1.mp4']        : '',
-					['title 1 [channel 1].id1.jpg']        : '',
-					['title 1 [channel 1].id1.description']: '',
-					['title 1 [channel 1].id1.info.json']  : JSON.stringify({ id: 'id1', title: 'title 1', channel: 'channel 1' }),
-
-					/* filename doesn't match json */
-					['title 2 [channel 2].id2.mp4']        : '',
-					['title 2 [channel 2].id2.webp']       : '',
-					['title 2 [channel 2].id2.description']: '',
-					['title 2 [channel 2].id2.info.json']  : JSON.stringify({ id: 'id2', title: 'new title 2', channel: 'channel 2' }),
-
-					/* filename matches json but contains bad symbols */
-					['title 3?*:<> [channel 3].id3.mp4']        : '',
-					['title 3?*:<> [channel 3].id3.jpg']        : '',
-					['title 3?*:<> [channel 3].id3.description']: '',
-					['title 3?*:<> [channel 3].id3.info.json']  : JSON.stringify({ id: 'id3', title: 'title 3?*:<>', channel: 'channel 3' }),
-
-					/* filename doesn't contain id */
-					['title 4 [channel 4].mp4']        : '',
-					['title 4 [channel 4].jpg']        : '',
-					['title 4 [channel 4].description']: '',
-					['title 4 [channel 4].info.json']  : JSON.stringify({ id: 'id4', title: 'title 4', channel: 'channel 4' }),
-				},
-			});
-		});
-
-		afterAll(() => {
-			mockFs.restore();
-		});
-
 		it('should output files to rename', () => {
 			validate(profile);
 

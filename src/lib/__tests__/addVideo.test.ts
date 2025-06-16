@@ -94,6 +94,10 @@ beforeEach(() => {
 	};
 });
 
+afterAll(() => {
+	mockFs.restore();
+});
+
 describe('src/lib/addVideo', () => {
 	describe('addVideo', () => {
 		it('should generate files', async () => {
