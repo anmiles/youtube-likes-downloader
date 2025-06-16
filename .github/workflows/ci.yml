@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - test
   pull_request:
   workflow_dispatch:
 
@@ -23,7 +24,7 @@ jobs:
       with:
         path: "**/node_modules"
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
-    - run: npm ci
+    - run: ls src/lib/__tests__; npm ci; ls src/lib/__tests__
 
   spellcheck:
     needs: install
@@ -38,8 +39,8 @@ jobs:
         path: "**/node_modules"
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
         lookup-only: true
-    - run: npm ci
-    - run: npm run spellcheck
+    - run: ls src/lib/__tests__; npm ci
+    - run: npm run spellcheck; ls src/lib/__tests__
 
   build:
     needs: install
@@ -58,8 +59,8 @@ jobs:
       with:
         path: "**/dist"
         key: "dist-${{ hashFiles('**/*.ts', '**/*.mts') }}"
-    - run: npm ci
-    - run: npm run build
+    - run: ls src/lib/__tests__; npm ci
+    - run: npm run build; ls src/lib/__tests__
 
   lint:
     needs: install
@@ -74,8 +75,8 @@ jobs:
         path: "**/node_modules"
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
         lookup-only: true
-    - run: npm ci
-    - run: npm run lint
+    - run: ls src/lib/__tests__; npm ci
+    - run: npm run lint; ls src/lib/__tests__
 
   test:
     needs: install
@@ -90,6 +91,6 @@ jobs:
         path: "**/node_modules"
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
         lookup-only: true
-    - run: npm ci
-    - run: npm run test:ci
+    - run: ls src/lib/__tests__; npm ci; ls src/lib/__tests__
+    - run: ls src/lib/__tests__; npm run test:ci; ls src/lib/__tests__
     - run: npm run test:report:coverage
