@@ -13,84 +13,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  install:
-    runs-on: ubuntu-latest
-    container:
-      image: node:20.19.2-alpine
-    timeout-minutes: 30
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/cache@v4
-      with:
-        path: "**/node_modules"
-        key: "node_modules-${{ hashFiles('package-lock.json') }}"
-    - run: npm ci
-
-  spellcheck:
-    needs: install
-    runs-on: ubuntu-latest
-    container:
-      image: node:20.19.2-alpine
-    timeout-minutes: 30
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/cache@v4
-      with:
-        path: "**/node_modules"
-        key: "node_modules-${{ hashFiles('package-lock.json') }}"
-        lookup-only: true
-    - run: npm ci
-    - run: npm run spellcheck
-
-  build:
-    needs: install
-    runs-on: ubuntu-latest
-    container:
-      image: node:20.19.2-alpine
-    timeout-minutes: 30
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/cache@v4
-      with:
-        path: "**/node_modules"
-        key: "node_modules-${{ hashFiles('package-lock.json') }}"
-        lookup-only: true
-    - uses: actions/cache@v4
-      with:
-        path: "**/dist"
-        key: "dist-${{ hashFiles('**/*.ts', '**/*.mts') }}"
-    - run: npm ci
-    - run: npm run build
-
-  lint:
-    needs: install
-    runs-on: ubuntu-latest
-    container:
-      image: node:20.19.2-alpine
-    timeout-minutes: 30
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/cache@v4
-      with:
-        path: "**/node_modules"
-        key: "node_modules-${{ hashFiles('package-lock.json') }}"
-        lookup-only: true
-    - run: npm ci
-    - run: npm run lint
-
   test:
-    needs: install
     runs-on: ubuntu-latest
     container:
       image: node:20.19.2-alpine
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/cache@v4
-      with:
-        path: "**/node_modules"
-        key: "node_modules-${{ hashFiles('package-lock.json') }}"
-        lookup-only: true
     - run: npm ci
     - run: npm run test:ci
     - run: npm run test:report:coverage
