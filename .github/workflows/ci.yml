@@ -24,7 +24,7 @@ jobs:
       with:
         path: "**/node_modules"
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
-    - run: ls src/lib/__tests__; npm ci; ls src/lib/__tests__
+    - run: npm ci
 
   spellcheck:
     needs: install
@@ -39,8 +39,8 @@ jobs:
         path: "**/node_modules"
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
         lookup-only: true
-    - run: ls src/lib/__tests__; npm ci
-    - run: npm run spellcheck; ls src/lib/__tests__
+    - run: npm ci
+    - run: npm run spellcheck
 
   build:
     needs: install
@@ -59,8 +59,8 @@ jobs:
       with:
         path: "**/dist"
         key: "dist-${{ hashFiles('**/*.ts', '**/*.mts') }}"
-    - run: ls src/lib/__tests__; npm ci
-    - run: npm run build; ls src/lib/__tests__
+    - run: npm ci
+    - run: npm run build
 
   lint:
     needs: install
@@ -75,8 +75,8 @@ jobs:
         path: "**/node_modules"
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
         lookup-only: true
-    - run: ls src/lib/__tests__; npm ci
-    - run: npm run lint; ls src/lib/__tests__
+    - run: npm ci
+    - run: npm run lint
 
   test:
     needs: install
@@ -91,6 +91,6 @@ jobs:
         path: "**/node_modules"
         key: "node_modules-${{ hashFiles('package-lock.json') }}"
         lookup-only: true
-    - run: ls src/lib/__tests__; npm ci; ls src/lib/__tests__
-    - run: ls src/lib/__tests__; npx jest --ci --coverage --detectOpenHandles --verbose; ls src/lib/__tests__
+    - run: npm ci
+    - run: npm run test:ci
     - run: npm run test:report:coverage
