@@ -22,7 +22,7 @@ const youtubeApis = {
 	playlistItems: 'playlistItems',
 } as const;
 
-function mockGetItems(selectAPI: ((api: typeof youtubeApis)=> typeof youtubeApis[keyof typeof youtubeApis])): typeof playlistItems {
+function mockGetItems(selectAPI: (api: typeof youtubeApis)=> typeof youtubeApis[keyof typeof youtubeApis]): typeof playlistItems {
 	switch (selectAPI(youtubeApis)) {
 		case youtubeApis.playlistItems: return playlistItems;
 	}
