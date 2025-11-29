@@ -34,10 +34,10 @@
 		"login": "node ./dist/login.js"
 	},
 	"dependencies": {
-		"@anmiles/google-api-wrapper": "^19.0.5",
-		"@anmiles/logger": "^8.0.1",
-		"@anmiles/prototypes": "^11.2.2",
-		"@anmiles/zod-tools": "^1.0.2",
+		"@anmiles/google-api-wrapper": "^19.0.6",
+		"@anmiles/logger": "^8.0.2",
+		"@anmiles/prototypes": "^11.2.3",
+		"@anmiles/zod-tools": "^1.0.3",
 		"colorette": "^2.0.20",
 		"execa": "^5.1.1",
 		"googleapis": "^148.0.0",
@@ -45,8 +45,8 @@
 		"zod": "^4.0.8"
 	},
 	"devDependencies": {
-		"@anmiles/eslint-config": "^9.0.3",
-		"@anmiles/jest-extensions": "^6.1.2",
+		"@anmiles/eslint-config": "^9.0.4",
+		"@anmiles/jest-extensions": "^6.1.3",
 		"@anmiles/tsconfig": "^4.0.0",
 		"@eslint/compat": "^1.3.1",
 		"@eslint/css": "^0.10.0",
