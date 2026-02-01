@@ -22,7 +22,7 @@ const youtubeApis = {
 	playlistItems: 'playlistItems',
 } as const;
 
-function mockGetItems(selectAPI: (api: typeof youtubeApis)=> typeof youtubeApis[keyof typeof youtubeApis]): typeof playlistItems {
+function mockGetItems(selectAPI: (api: typeof youtubeApis) => typeof youtubeApis[keyof typeof youtubeApis]): typeof playlistItems {
 	switch (selectAPI(youtubeApis)) {
 		case youtubeApis.playlistItems: return playlistItems;
 	}
@@ -140,7 +140,7 @@ describe('src/lib/likes', () => {
 		it('should throw if likes file does not exist', async () => {
 			mockFs({});
 
-			await expect(async () => exportLikes(profile)).rejects.toEqual(new Error(`Likes file ${likesFile} doesn't exist, please create it and paste each videos URL (like https://www.youtube.com/watch?v=abcabcabc) on each line`));
+			await expect(exportLikes(profile)).rejects.toEqual(new Error(`Likes file ${likesFile} doesn't exist, please create it and paste each videos URL (like https://www.youtube.com/watch?v=abcabcabc) on each line`));
 		});
 
 		it('should process and log each video id in reverse order', async () => {
@@ -238,7 +238,7 @@ describe('src/lib/likes', () => {
 					api.videos.rate.mockResolvedValueOnce(undefined);
 					api.videos.rate.mockRejectedValueOnce({ errors: [ error, secondError ] });
 
-					await expect(async () => exportLikes(profile)).rejects.toEqual({ errors: [ error, secondError ] });
+					await expect(exportLikes(profile)).rejects.toEqual({ errors: [ error, secondError ] });
 
 					expect(api.videos.rate).toHaveBeenCalledTimes(2);
 					expect(api.videos.rate).toHaveBeenCalledWith({ id: 'video3Id', rating: 'like' });
@@ -250,8 +250,8 @@ describe('src/lib/likes', () => {
 				api.videos.rate.mockRejectedValueOnce({ errors: [ { reason: 'other reason' } ] });
 				api.videos.rate.mockRejectedValueOnce({ errors: [ { customKey: 'value' } ] });
 
-				await expect(async () => exportLikes(profile)).rejects.toEqual({ errors: [ { reason: 'other reason' } ] });
-				await expect(async () => exportLikes(profile)).rejects.toEqual({ errors: [ { customKey: 'value' } ] });
+				await expect(exportLikes(profile)).rejects.toEqual({ errors: [ { reason: 'other reason' } ] });
+				await expect(exportLikes(profile)).rejects.toEqual({ errors: [ { customKey: 'value' } ] });
 
 				expect(api.videos.rate).toHaveBeenCalledTimes(2);
 			});
@@ -260,12 +260,12 @@ describe('src/lib/likes', () => {
 				api.videos.rate.mockRejectedValueOnce('string error');
 				api.videos.rate.mockRejectedValueOnce(new Error('error'));
 				api.videos.rate.mockRejectedValueOnce(null);
-				api.videos.rate.mockRejectedValueOnce({ });
+				api.videos.rate.mockRejectedValueOnce({});
 
-				await expect(async () => exportLikes(profile)).rejects.toEqual('string error');
-				await expect(async () => exportLikes(profile)).rejects.toEqual(new Error('error'));
-				await expect(async () => exportLikes(profile)).rejects.toEqual(null);
-				await expect(async () => exportLikes(profile)).rejects.toEqual({ });
+				await expect(exportLikes(profile)).rejects.toEqual('string error');
+				await expect(exportLikes(profile)).rejects.toEqual(new Error('error'));
+				await expect(exportLikes(profile)).rejects.toEqual(null);
+				await expect(exportLikes(profile)).rejects.toEqual({});
 
 				expect(api.videos.rate).toHaveBeenCalledTimes(4);
 			});

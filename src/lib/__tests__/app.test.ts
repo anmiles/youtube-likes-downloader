@@ -17,7 +17,7 @@ jest.mock('../validate');
 const profile1 = 'username1';
 const profile2 = 'username2';
 
-jest.mocked(filterProfiles).mockImplementation(() => [ profile1, profile2 ]);
+jest.mocked(filterProfiles).mockReturnValue([ profile1, profile2 ]);
 
 describe('src/lib/app', () => {
 	describe('run', () => {

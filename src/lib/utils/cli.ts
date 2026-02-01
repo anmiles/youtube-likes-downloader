@@ -14,7 +14,7 @@ export class Cli {
 		});
 	}
 
-	async getAnswer<T>(question: string, processAnswer: (answer: string)=> T | Error): Promise<T> {
+	async getAnswer<T>(question: string, processAnswer: (answer: string) => T | Error): Promise<T> {
 		while (true) {
 			const answer = await this.ask(colorette.yellow(`${question}: `));
 			const result = processAnswer(answer);

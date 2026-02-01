@@ -58,7 +58,7 @@ const expectedFiles: Record<string, string> = {
 let answers: Record<typeof questions[number], SequentialArray<string>>;
 
 const readlineInterface = mockPartial<Interface>({
-	question: jest.fn().mockImplementation((question: string, resolve: (answer: string)=> void) => {
+	question: jest.fn().mockImplementation((question: string, resolve: (answer: string) => void) => {
 		const validQuestion = validate(question, questionsSchema);
 		const answer        = answers[validQuestion].next();
 
