@@ -20,25 +20,33 @@ beforeEach(() => {
 			['title 1 [channel 1].id1.mp4']        : '',
 			['title 1 [channel 1].id1.jpg']        : '',
 			['title 1 [channel 1].id1.description']: '',
-			['title 1 [channel 1].id1.info.json']  : JSON.stringify({ id: 'id1', title: 'title 1', channel: 'channel 1' }),
+			['title 1 [channel 1].id1.info.json']  : JSON.stringify({
+				id: 'id1', title: 'title 1', channel: 'channel 1', epoch: 1, ext: '.mp4',
+			}),
 
 			/* filename doesn't match json */
 			['title 2 [channel 2].id2.mp4']        : '',
 			['title 2 [channel 2].id2.webp']       : '',
 			['title 2 [channel 2].id2.description']: '',
-			['title 2 [channel 2].id2.info.json']  : JSON.stringify({ id: 'id2', title: 'new title 2', channel: 'channel 2' }),
+			['title 2 [channel 2].id2.info.json']  : JSON.stringify({
+				id: 'id2', title: 'new title 2', channel: 'channel 2', epoch: 1, ext: '.mp4',
+			}),
 
 			/* filename matches json but contains bad symbols */
 			['title 3?*:<> [channel 3].id3.mp4']        : '',
 			['title 3?*:<> [channel 3].id3.jpg']        : '',
 			['title 3?*:<> [channel 3].id3.description']: '',
-			['title 3?*:<> [channel 3].id3.info.json']  : JSON.stringify({ id: 'id3', title: 'title 3?*:<>', channel: 'channel 3' }),
+			['title 3?*:<> [channel 3].id3.info.json']  : JSON.stringify({
+				id: 'id3', title: 'title 3?*:<>', channel: 'channel 3', epoch: 1, ext: '.mp4',
+			}),
 
 			/* filename doesn't contain id */
 			['title 4 [channel 4].mp4']        : '',
 			['title 4 [channel 4].jpg']        : '',
 			['title 4 [channel 4].description']: '',
-			['title 4 [channel 4].info.json']  : JSON.stringify({ id: 'id4', title: 'title 4', channel: 'channel 4' }),
+			['title 4 [channel 4].info.json']  : JSON.stringify({
+				id: 'id4', title: 'title 4', channel: 'channel 4', epoch: 1, ext: '.mp4',
+			}),
 		},
 	});
 });
@@ -74,25 +82,33 @@ describe('src/lib/validate', () => {
 				['output/username/title 1 [channel 1].id1.mp4']        : '',
 				['output/username/title 1 [channel 1].id1.jpg']        : '',
 				['output/username/title 1 [channel 1].id1.description']: '',
-				['output/username/title 1 [channel 1].id1.info.json']  : JSON.stringify({ id: 'id1', title: 'title 1', channel: 'channel 1' }),
+				['output/username/title 1 [channel 1].id1.info.json']  : JSON.stringify({
+					id: 'id1', title: 'title 1', channel: 'channel 1', epoch: 1, ext: '.mp4',
+				}),
 
 				/* filename doesn't match json */
 				['output/username/new title 2 [channel 2].id2.mp4']        : '',
 				['output/username/new title 2 [channel 2].id2.webp']       : '',
 				['output/username/new title 2 [channel 2].id2.description']: '',
-				['output/username/new title 2 [channel 2].id2.info.json']  : JSON.stringify({ id: 'id2', title: 'new title 2', channel: 'channel 2' }),
+				['output/username/new title 2 [channel 2].id2.info.json']  : JSON.stringify({
+					id: 'id2', title: 'new title 2', channel: 'channel 2', epoch: 1, ext: '.mp4',
+				}),
 
 				/* filename matches json but contains bad symbols */
 				['output/username/title 3 - [channel 3].id3.mp4']        : '',
 				['output/username/title 3 - [channel 3].id3.jpg']        : '',
 				['output/username/title 3 - [channel 3].id3.description']: '',
-				['output/username/title 3 - [channel 3].id3.info.json']  : JSON.stringify({ id: 'id3', title: 'title 3?*:<>', channel: 'channel 3' }),
+				['output/username/title 3 - [channel 3].id3.info.json']  : JSON.stringify({
+					id: 'id3', title: 'title 3?*:<>', channel: 'channel 3', epoch: 1, ext: '.mp4',
+				}),
 
 				/* filename doesn't contain id */
 				['output/username/title 4 [channel 4].id4.mp4']        : '',
 				['output/username/title 4 [channel 4].id4.jpg']        : '',
 				['output/username/title 4 [channel 4].id4.description']: '',
-				['output/username/title 4 [channel 4].id4.info.json']  : JSON.stringify({ id: 'id4', title: 'title 4', channel: 'channel 4' }),
+				['output/username/title 4 [channel 4].id4.info.json']  : JSON.stringify({
+					id: 'id4', title: 'title 4', channel: 'channel 4', epoch: 1, ext: '.mp4',
+				}),
 			});
 		});
 

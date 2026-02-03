@@ -2,7 +2,7 @@
 import type { VideoInfo, VideoJSON } from '../types';
 
 export function formatJSON(
-	{ id, title, channel, ext, resolution, duration }: VideoInfo & { resolution: [number, number]; duration: string },
+	{ id, title, channel, ext, resolution, duration, epoch }: VideoInfo & { resolution: [number, number]; duration: string },
 ): VideoJSON {
 	return {
 		id,
@@ -13,5 +13,6 @@ export function formatJSON(
 		height         : resolution[1],
 		resolution     : resolution.join('x'),
 		duration_string: duration,
+		epoch,
 	};
 }

@@ -34,6 +34,7 @@ const questions = [
 	'Video file: ',
 	'Image file: ',
 	'Description file: ',
+	'Date: ',
 ] as const;
 
 const questionsSchema = z.enum(questions);
@@ -52,6 +53,7 @@ const expectedFiles: Record<string, string> = {
 		height         : 720,
 		resolution     : '1280x720',
 		duration_string: '01:30:00', // eslint-disable-line camelcase
+		epoch          : 1577836800,
 	}),
 };
 
@@ -91,6 +93,7 @@ beforeEach(() => {
 		'Video file: '      : new SequentialArray([ videoFile ]),
 		'Image file: '      : new SequentialArray([ imageFile ]),
 		'Description file: ': new SequentialArray([ descriptionFile ]),
+		'Date: '            : new SequentialArray([ '2020-01-01' ]),
 	};
 });
 
@@ -165,6 +168,15 @@ describe('src/lib/addVideo', () => {
 			await addVideo(profile);
 
 			expect(error).toHaveBeenCalledWith(new Error('File not exists'));
+			expect(outputDir).toMatchFiles(expectedFiles);
+		});
+
+		it('should output error if date is not valid', async () => {
+			answers['Date: '] = new SequentialArray([ 'wrong date', '2020-01-01' ]);
+
+			await addVideo(profile);
+
+			expect(error).toHaveBeenCalledWith(new Error('Date should be in the format YYYY-MM-dd'));
 			expect(outputDir).toMatchFiles(expectedFiles);
 		});
 	});
