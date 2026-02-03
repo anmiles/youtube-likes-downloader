@@ -49,6 +49,7 @@ describe('src/lib/download', () => {
 				'--write-thumbnail',
 				'--write-description',
 				'--write-info-json',
+				'--js-runtimes', 'node',
 			], { cwd: outputDir });
 		});
 

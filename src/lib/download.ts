@@ -24,6 +24,8 @@ const flags = [
 	'--write-thumbnail',
 	'--write-description',
 	'--write-info-json',
+	'--js-runtimes', 'node',
+	// '--extractor-args', 'youtube:player-client=default,mweb',
 ];
 
 export async function download(profile: string): Promise<execa.ExecaChildProcess> {
