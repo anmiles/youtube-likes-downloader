@@ -2,29 +2,47 @@ import type { Interface } from 'readline';
 import { createInterface } from 'readline';
 
 import { error } from '@anmiles/logger';
+import {  validate as zodValidate } from '@anmiles/zod-tools';
+import type { Schema } from '@anmiles/zod-tools';
 import * as colorette from 'colorette';
 
 export class Cli {
 	private readonly interface: Interface;
 
-	constructor() {
+	constructor(
+		private readonly transformInput = (text: string) => colorette.yellow(text),
+	) {
 		this.interface = createInterface({
 			input : process.stdin,
 			output: process.stdout,
 		});
 	}
 
-	async getAnswer<T>(question: string, processAnswer: (answer: string) => T | Error): Promise<T> {
+	async getAnswer<T>(
+		question: string,
+		schema: Schema<T>,
+		transformOutput?: (answer: string) => unknown,
+	): Promise<T> {
 		while (true) {
-			const answer = await this.ask(colorette.yellow(`${question}: `));
-			const result = processAnswer(answer);
+			const answer = await this.ask(`${question}: `);
 
-			if (!(result instanceof Error)) {
-				return result;
+			const output = answer
+				? transformOutput
+					? transformOutput(answer)
+					: answer
+				: undefined;
+
+			try {
+				return zodValidate(output, schema);
+			} catch (ex) {
+				const { message } = Error.parse(ex);
+				error(message);
 			}
-
-			error(result);
 		}
+	}
+
+	say(text: string): void {
+		this.interface.write(`${this.transformInput(text)}\n`);
 	}
 
 	close(): void {
@@ -33,7 +51,7 @@ export class Cli {
 
 	private async ask(query: string): Promise<string> {
 		return new Promise((resolve) => {
-			this.interface.question(query, resolve);
+			this.interface.question(this.transformInput(query), resolve);
 		});
 	}
 }

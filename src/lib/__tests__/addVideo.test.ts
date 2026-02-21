@@ -14,6 +14,7 @@ import { getDownloadArchive, getOutputDir } from '../utils/paths';
 import { SequentialArray } from './testUtils/sequentialArray';
 
 jest.mock('@anmiles/logger');
+jest.mock('out-url');
 jest.mock('readline');
 
 jest.mock('colorette', () => new Proxy({}, {
@@ -25,44 +26,77 @@ const videoFile       = 'test/video.mp4';
 const imageFile       = 'test/poster.jpg';
 const descriptionFile = 'test/description.txt';
 
+const id   = 'video_c3';
+const link = `https://www.youtube.com/watch?v=${id}`;
+
+const title    = 'First movie: beginning <pilot version>';
+const channel  = 'Test channel';
+const duration = '01:30:00';
+
+const width      = 1280;
+const height     = 720;
+const resolution = `${width}x${height}`;
+
+const date  = '2020-01-01';
+const epoch = Math.round(new Date(date).getTime() / 1000);
+
+const ext = 'mp4';
+
+const video       = 'video\nend';
+const image       = 'image\nend';
+const description = 'description\nend';
+
+const thumbnail = 'https://example.com/thumbnail.jpg';
+
 const questions = [
+	'Input JSON (optional): ',
 	'Youtube link: ',
-	'Channel: ',
 	'Title: ',
+	'Channel: ',
 	'Duration: ',
 	'Resolution: ',
+	'Date: ',
 	'Video file: ',
 	'Image file: ',
 	'Description file: ',
-	'Date: ',
 ] as const;
 
 const questionsSchema = z.enum(questions);
 const outputDir       = getOutputDir(profile);
 
 const expectedFiles: Record<string, string> = {
-	['output/username/First movie - beginning pilot version [Test channel].video_c3.mp4']        : 'video',
-	['output/username/First movie - beginning pilot version [Test channel].video_c3.jpg']        : 'image',
-	['output/username/First movie - beginning pilot version [Test channel].video_c3.description']: 'description',
+	['output/username/First movie - beginning pilot version [Test channel].video_c3.mp4']        : video,
+	['output/username/First movie - beginning pilot version [Test channel].video_c3.jpg']        : image,
+	['output/username/First movie - beginning pilot version [Test channel].video_c3.description']: description,
 	['output/username/First movie - beginning pilot version [Test channel].video_c3.info.json']  : JSON.stringify({
-		id             : 'video_c3',
-		title          : 'First movie: beginning <pilot version>',
-		channel        : 'Test channel',
-		ext            : 'mp4',
-		width          : 1280,
-		height         : 720,
-		resolution     : '1280x720',
-		duration_string: '01:30:00', // eslint-disable-line camelcase
-		epoch          : 1577836800,
+		id,
+		title,
+		channel,
+		ext,
+		width,
+		height,
+		resolution,
+		duration_string: duration, // eslint-disable-line camelcase
+		epoch,
 	}),
 };
 
 let answers: Record<typeof questions[number], SequentialArray<string>>;
 
+const write = jest.fn();
+const close = jest.fn();
+
 const readlineInterface = mockPartial<Interface>({
 	question: jest.fn().mockImplementation((question: string, resolve: (answer: string) => void) => {
-		const validQuestion = validate(question, questionsSchema);
-		const answer        = answers[validQuestion].next();
+		let validQuestion: typeof questions[number];
+
+		try {
+			validQuestion = validate(question, questionsSchema);
+		} catch (ex) {
+			throw new Error(`Invalid question '${question}'`, Error.parse(ex));
+		}
+
+		const answer = answers[validQuestion].next();
 
 		if (typeof answer === 'undefined') {
 			throw new Error(`Question '${question}' has no more answers`);
@@ -70,30 +104,31 @@ const readlineInterface = mockPartial<Interface>({
 
 		resolve(answer);
 	}),
-
-	close: jest.fn(),
+	write,
+	close,
 });
 
 jest.mocked(createInterface).mockReturnValue(readlineInterface);
 
 beforeEach(() => {
 	mockFs({
-		[videoFile]                  : 'video',
-		[imageFile]                  : 'image',
-		[descriptionFile]            : 'description',
+		[videoFile]                  : video,
+		[imageFile]                  : image,
+		[descriptionFile]            : description,
 		[getDownloadArchive(profile)]: 'youtube video_a1\nyoutube video_b2\n',
-	});
+	}, { createTmp: true });
 
 	answers = {
-		'Youtube link: '    : new SequentialArray([ 'https://www.youtube.com/watch?v=video_c3' ]),
-		'Channel: '         : new SequentialArray([ 'Test channel' ]),
-		'Title: '           : new SequentialArray([ 'First movie: beginning <pilot version>' ]),
-		'Duration: '        : new SequentialArray([ '01:30:00' ]),
-		'Resolution: '      : new SequentialArray([ '1280x720' ]),
-		'Video file: '      : new SequentialArray([ videoFile ]),
-		'Image file: '      : new SequentialArray([ imageFile ]),
-		'Description file: ': new SequentialArray([ descriptionFile ]),
-		'Date: '            : new SequentialArray([ '2020-01-01' ]),
+		'Input JSON (optional): ': new SequentialArray([ '' ]),
+		'Youtube link: '         : new SequentialArray([ link ]),
+		'Title: '                : new SequentialArray([ title ]),
+		'Channel: '              : new SequentialArray([ channel ]),
+		'Duration: '             : new SequentialArray([ duration ]),
+		'Resolution: '           : new SequentialArray([ resolution ]),
+		'Date: '                 : new SequentialArray([ date ]),
+		'Video file: '           : new SequentialArray([ videoFile ]),
+		'Image file: '           : new SequentialArray([ imageFile ]),
+		'Description file: '     : new SequentialArray([ descriptionFile ]),
 	};
 });
 
@@ -117,30 +152,45 @@ describe('src/lib/addVideo', () => {
 			expect(downloadArchive).toEqual('youtube video_a1\nyoutube video_b2\nyoutube video_c3\n');
 		});
 
+		it('should close used interface', async () => {
+			await addVideo(profile);
+
+			expect(close).toHaveBeenCalled();
+		});
+
 		it('should output error if youtube link is not valid', async () => {
-			answers['Youtube link: '] = new SequentialArray([ 'wrong link', 'https://www.youtube.com/watch?v=video_c3' ]);
+			answers['Youtube link: '] = new SequentialArray([ 'wrong link', link ]);
 
 			await addVideo(profile);
 
-			expect(error).toHaveBeenCalledWith(new Error('Youtube link should be in the format https://www.youtube.com/watch?v=...'));
+			expect(error).toHaveBeenCalledWith('Validation failed:\n\t (Youtube link should be in the format https://www.youtube.com/watch?v=...)');
 			expect(outputDir).toMatchFiles(expectedFiles);
 		});
 
 		it('should output error if duration is not valid', async () => {
-			answers['Duration: '] = new SequentialArray([ 'wrong duration', '01:30:00' ]);
+			answers['Duration: '] = new SequentialArray([ 'wrong duration', duration ]);
 
 			await addVideo(profile);
 
-			expect(error).toHaveBeenCalledWith(new Error('Duration should be in the format <min>:<sec> or <hour>:<min>:<sec>'));
+			expect(error).toHaveBeenCalledWith('Validation failed:\n\t (Duration should be in the format <min>:<sec> or <hour>:<min>:<sec>)');
 			expect(outputDir).toMatchFiles(expectedFiles);
 		});
 
 		it('should output error if resolution is not valid', async () => {
-			answers['Resolution: '] = new SequentialArray([ 'wrong resolution', '1280x720' ]);
+			answers['Resolution: '] = new SequentialArray([ 'wrong resolution', resolution ]);
 
 			await addVideo(profile);
 
-			expect(error).toHaveBeenCalledWith(new Error('Resolution should be in the format <width>x<height>'));
+			expect(error).toHaveBeenCalledWith('Validation failed:\n\t (Resolution should be in the format <width>x<height>)');
+			expect(outputDir).toMatchFiles(expectedFiles);
+		});
+
+		it('should output error if date is not valid', async () => {
+			answers['Date: '] = new SequentialArray([ 'wrong date', date ]);
+
+			await addVideo(profile);
+
+			expect(error).toHaveBeenCalledWith('Validation failed:\n\t (Date should be in the format YYYY-MM-dd)');
 			expect(outputDir).toMatchFiles(expectedFiles);
 		});
 
@@ -149,7 +199,7 @@ describe('src/lib/addVideo', () => {
 
 			await addVideo(profile);
 
-			expect(error).toHaveBeenCalledWith(new Error('File not exists'));
+			expect(error).toHaveBeenCalledWith('Validation failed:\n\t (File not exists)');
 			expect(outputDir).toMatchFiles(expectedFiles);
 		});
 
@@ -158,7 +208,7 @@ describe('src/lib/addVideo', () => {
 
 			await addVideo(profile);
 
-			expect(error).toHaveBeenCalledWith(new Error('File not exists'));
+			expect(error).toHaveBeenCalledWith('Validation failed:\n\t (File not exists)');
 			expect(outputDir).toMatchFiles(expectedFiles);
 		});
 
@@ -167,17 +217,29 @@ describe('src/lib/addVideo', () => {
 
 			await addVideo(profile);
 
-			expect(error).toHaveBeenCalledWith(new Error('File not exists'));
+			expect(error).toHaveBeenCalledWith('Validation failed:\n\t (File not exists)');
 			expect(outputDir).toMatchFiles(expectedFiles);
 		});
 
-		it('should output error if date is not valid', async () => {
-			answers['Date: '] = new SequentialArray([ 'wrong date', '2020-01-01' ]);
+		describe('json', () => {
+			const json = Object.freeze({
+				id,
+				title,
+				channel,
+				duration,
+				resolution,
+				epoch,
+				description,
+				thumbnail,
+			});
 
-			await addVideo(profile);
+			it('should process json if specified', async () => {
+				answers['Input JSON (optional): '] = new SequentialArray([ JSON.stringify(json) ]);
 
-			expect(error).toHaveBeenCalledWith(new Error('Date should be in the format YYYY-MM-dd'));
-			expect(outputDir).toMatchFiles(expectedFiles);
+				await addVideo(profile);
+
+				expect(outputDir).toMatchFiles(expectedFiles);
+			});
 		});
 	});
 });

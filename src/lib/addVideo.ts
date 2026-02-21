@@ -1,26 +1,36 @@
+import { randomUUID } from 'crypto';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
-import { config } from './config';
+import { open } from 'out-url';
+import { z } from 'zod';
+
+import type { dataSchema } from './types/schema';
+import { durationSchema, epochSchema, fileSchema, inputDataSchema, resolutionSchema, stringSchema, youtubeIdSchema } from './types/schema';
 import '@anmiles/prototypes';
 import { Cli } from './utils/cli';
 import { formatJSON } from './utils/formatJSON';
 import { formatTitle } from './utils/formatTitle';
 import { getDownloadArchive, getOutputDir } from './utils/paths';
 
+type InputData = z.infer<typeof inputDataSchema>;
+type Data = z.infer<typeof dataSchema>;
+
 export async function addVideo(profile: string): Promise<void> {
 	const cli = new Cli();
 
-	const id         = await getID(cli);
-	const channel    = await getChannel(cli);
-	const title      = await getTitle(cli);
-	const duration   = await getDuration(cli);
-	const resolution = await getResolution(cli);
-	const epoch      = await getEpoch(cli);
-
-	const videoFile       = await getVideoFile(cli);
-	const imageFile       = await getImageFile(cli);
-	const descriptionFile = await getDescriptionFile(cli);
+	const {
+		id,
+		title,
+		channel,
+		duration,
+		resolution,
+		epoch,
+		videoFile,
+		imageFile,
+		descriptionFile,
+	} = await getData(cli);
 
 	cli.close();
 
@@ -30,7 +40,7 @@ export async function addVideo(profile: string): Promise<void> {
 	fs.ensureDir(outputDir, { create: true });
 
 	const filename = path.join(outputDir, `${formatTitle({ id, title, channel }).toFilename()}`);
-	const json     = formatJSON({ id, title, channel, ext, resolution, duration, epoch });
+	const json     = formatJSON({ id, title, channel, duration, resolution, epoch, ext });
 
 	await fs.promises.writeFile(`${filename}.info.json`, JSON.stringify(json));
 
@@ -41,103 +51,61 @@ export async function addVideo(profile: string): Promise<void> {
 	await fs.promises.appendFile(getDownloadArchive(profile), `youtube ${id}\n`);
 }
 
-async function getID(cli: Cli): Promise<string> {
-	const regex = `^${config.urlPrefix.regexEscape()}(.+?)(&|$)`;
+async function getData(cli: Cli): Promise<Data> {
+	const data = await getJSONData(cli);
 
-	return cli.getAnswer('Youtube link', (answer) => {
-		const match = answer.match(regex);
+	if (data) {
+		return data;
+	}
 
-		if (!match) {
-			return new Error(`Youtube link should be in the format ${config.urlPrefix}...`);
-		}
-
-		return match.toTuple(3)[1];
-	});
+	return {
+		id             : await cli.getAnswer('Youtube link', youtubeIdSchema),
+		title          : await cli.getAnswer('Title', stringSchema),
+		channel        : await cli.getAnswer('Channel', stringSchema),
+		duration       : await cli.getAnswer('Duration', durationSchema),
+		resolution     : await cli.getAnswer('Resolution', resolutionSchema),
+		epoch          : await cli.getAnswer('Date', epochSchema),
+		videoFile      : await cli.getAnswer('Video file', fileSchema),
+		imageFile      : await cli.getAnswer('Image file', fileSchema),
+		descriptionFile: await cli.getAnswer('Description file', fileSchema),
+	};
 }
 
-async function getChannel(cli: Cli): Promise<string> {
-	return cli.getAnswer('Channel', (answer) => answer);
+async function getJSONData(cli: Cli): Promise<Data | undefined> {
+	const inputData = await cli.getAnswer('Input JSON (optional)', inputDataSchema.or(z.undefined()), JSON.parse);
+
+	if (!inputData) {
+		return undefined;
+	}
+
+	const videoFile = await cli.getAnswer('Video file', fileSchema);
+
+	cli.say('Opening thumbnail; please download it as an image file');
+	await open(inputData.thumbnail);
+	const imageFile = await cli.getAnswer('Image file', fileSchema);
+
+	const descriptionFile = createTempFilePath('txt');
+	await fs.promises.writeFile(descriptionFile, inputData.description);
+
+	return transformInputData(inputData, videoFile, imageFile, descriptionFile);
 }
 
-async function getTitle(cli: Cli): Promise<string> {
-	return cli.getAnswer('Title', (answer) => answer);
+function createTempFilePath(ext: string): string {
+	const tmp      = os.tmpdir();
+	const filename = randomUUID();
+	return path.join(tmp, `${filename}.${ext}`);
 }
 
-async function getDuration(cli: Cli): Promise<string> {
-	const regex = /^\d\d?(:\d\d)+$/;
-
-	return cli.getAnswer('Duration', (answer) => {
-		const match = answer.match(regex);
-
-		if (!match) {
-			return new Error('Duration should be in the format <min>:<sec> or <hour>:<min>:<sec>');
-		}
-
-		return answer;
-	});
-}
-
-async function getResolution(cli: Cli): Promise<[number, number]> {
-	const regex = /^(\d+)[xх](\d+)$/;
-
-	return cli.getAnswer('Resolution', (answer) => {
-		const match = answer.match(regex);
-
-		if (!match) {
-			return new Error('Resolution should be in the format <width>x<height>');
-		}
-
-		return match.slice(1).map((d) => parseInt(d)).toTuple(2);
-	});
-}
-
-async function getEpoch(cli: Cli): Promise<number> {
-	const format = 'YYYY-MM-dd';
-	const regex  = /^(\d{4})-(\d{2})-(\d{2})$/;
-
-	return cli.getAnswer('Date', (answer) => {
-		const match = answer.match(regex);
-
-		if (!match) {
-			return new Error(`Date should be in the format ${format}`);
-		}
-
-		return Math.round(new Date(match[1]!).getTime() / 1000);
-	});
-}
-
-async function getVideoFile(cli: Cli): Promise<string> {
-	return cli.getAnswer('Video file', (answer) => {
-		const { exists } = fs.ensureFile(answer, { create: false });
-
-		if (!exists) {
-			return new Error('File not exists');
-		}
-
-		return answer;
-	});
-}
-
-async function getImageFile(cli: Cli): Promise<string> {
-	return cli.getAnswer('Image file', (answer) => {
-		const { exists } = fs.ensureFile(answer, { create: false });
-
-		if (!exists) {
-			return new Error('File not exists');
-		}
-
-		return answer;
-	});
-}
-
-async function getDescriptionFile(cli: Cli): Promise<string> {
-	return cli.getAnswer('Description file', (answer) => {
-		const { exists } = fs.ensureFile(answer, { create: false });
-
-		if (!exists) {
-			return new Error('File not exists');
-		}
-
-		return answer;
-	});
+function transformInputData(inputData: InputData, videoFile: string, imageFile: string, descriptionFile: string): Data {
+	return {
+		id        : inputData.id,
+		title     : inputData.title,
+		channel   : inputData.channel,
+		duration  : inputData.duration,
+		resolution: inputData.resolution,
+		epoch     : inputData.epoch,
+		videoFile,
+		imageFile,
+		descriptionFile,
+	};
 }

@@ -37,10 +37,11 @@
 		"@anmiles/google-api-wrapper": "^19.0.7",
 		"@anmiles/logger": "^8.0.3",
 		"@anmiles/prototypes": "^11.2.5",
-		"@anmiles/zod-tools": "^1.0.4",
+		"@anmiles/zod-tools": "^1.1.0",
 		"colorette": "^2.0.20",
 		"execa": "^5.1.1",
 		"googleapis": "^148.0.0",
+		"out-url": "^1.2.2",
 		"readline": "^1.3.0",
 		"zod": "^4.3.6"
 	},
