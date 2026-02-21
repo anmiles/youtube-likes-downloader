@@ -6,6 +6,7 @@ import { mockPartial } from '@anmiles/jest-extensions';
 import { error } from '@anmiles/logger';
 import { validate } from '@anmiles/zod-tools';
 import mockFs from 'mock-fs';
+import { open } from 'out-url';
 import z from 'zod';
 
 import { addVideo } from '../addVideo';
@@ -46,7 +47,7 @@ const video       = 'video\nend';
 const image       = 'image\nend';
 const description = 'description\nend';
 
-const thumbnail = 'https://example.com/thumbnail.jpg';
+const thumbnail = 'https://example.com/maxresdefault.jpg?sqp=wveou-wwhriakkrft=&rs=qt';
 
 const questions = [
 	'Input JSON (optional): ',
@@ -239,6 +240,34 @@ describe('src/lib/addVideo', () => {
 				await addVideo(profile);
 
 				expect(outputDir).toMatchFiles(expectedFiles);
+			});
+
+			it('should open thumbnail in the browser', async () => {
+				answers['Input JSON (optional): '] = new SequentialArray([ JSON.stringify(json) ]);
+
+				await addVideo(profile);
+
+				expect(open).toHaveBeenCalledWith('https://example.com/maxresdefault.jpg');
+			});
+
+			it('should output error if json is not valid', async () => {
+				const wrongJSON = JSON.stringify({ ...json, resolution: 'wrong resolution' });
+
+				answers['Input JSON (optional): '] = new SequentialArray([ JSON.stringify(wrongJSON), JSON.stringify(json) ]);
+
+				await addVideo(profile);
+
+				expect(error).toHaveBeenCalledWith('Validation failed:\n\t (Invalid input)');
+			});
+
+			it('should output error if json is broken', async () => {
+				const wrongJSON = 'wrong json';
+
+				answers['Input JSON (optional): '] = new SequentialArray([ JSON.stringify(wrongJSON), JSON.stringify(json) ]);
+
+				await addVideo(profile);
+
+				expect(error).toHaveBeenCalledWith('Validation failed:\n\t (Invalid input)');
 			});
 		});
 	});

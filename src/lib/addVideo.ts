@@ -81,7 +81,7 @@ async function getJSONData(cli: Cli): Promise<Data | undefined> {
 	const videoFile = await cli.getAnswer('Video file', fileSchema);
 
 	cli.say('Opening thumbnail; please download it as an image file');
-	await open(inputData.thumbnail);
+	await open(inputData.thumbnail.split('?')[0]!);
 	const imageFile = await cli.getAnswer('Image file', fileSchema);
 
 	const descriptionFile = createTempFilePath('txt');
