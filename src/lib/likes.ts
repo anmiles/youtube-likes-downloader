@@ -15,7 +15,7 @@ export async function importLikes(profile: string): Promise<void> {
 	const likesFile        = getLikesFile(profile);
 	const includeLikesFile = getIncludeLikesFile(profile);
 
-	const youtubeAPI          = await getAPI((auth) => youtube({ version: 'v3', auth }), profile);
+	const youtubeAPI          = await getAPI((auth) => youtube({ version: 'v3', auth, rootUrl: 'https://www.googleapis.com/' }), profile);
 	const videosList          = await youtubeAPI.getItems((api) => api.playlistItems, { playlistId: 'LL', part: [ 'snippet' ], maxResults: 50 });
 	const likesData: string[] = [];
 

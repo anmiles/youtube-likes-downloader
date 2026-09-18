@@ -4,4 +4,11 @@
 	"include" : [
 		"src",
 	],
+
+	"compilerOptions": {
+		"types": [
+			"jest",
+			"node",
+		],
+	},
 }

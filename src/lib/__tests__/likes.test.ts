@@ -94,12 +94,11 @@ afterAll(() => {
 
 describe('src/lib/likes', () => {
 	describe('importLikes', () => {
-
 		it('should get youtube API', async () => {
 			await importLikes(profile);
 
 			expect(getAPI).toHaveBeenCalledWith(expect.toBeFunction([ auth ], youtubeApis), profile);
-			expect(youtube).toHaveBeenCalledWith({ version: 'v3', auth });
+			expect(youtube).toHaveBeenCalledWith({ version: 'v3', auth, rootUrl: 'https://www.googleapis.com/' });
 		});
 
 		it('should get data from playlistItems API', async () => {
@@ -109,7 +108,9 @@ describe('src/lib/likes', () => {
 		});
 
 		it('should write likes into file', async () => {
-			fs.rmSync(includeLikesFile);
+			mockFs({
+				[likesFile]: likesData,
+			});
 
 			await importLikes(profile);
 

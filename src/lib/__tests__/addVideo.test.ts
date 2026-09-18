@@ -150,7 +150,14 @@ describe('src/lib/addVideo', () => {
 
 			const downloadArchive = (await fs.promises.readFile(getDownloadArchive(profile))).toString();
 
-			expect(downloadArchive).toEqual('youtube video_a1\nyoutube video_b2\nyoutube video_c3\n');
+			const expectedResult = [
+				'youtube video_a1',
+				'youtube video_b2',
+				'youtube video_c3',
+				'',
+			].join('\n');
+
+			expect(downloadArchive).toEqual(expectedResult);
 		});
 
 		it('should close used interface', async () => {
@@ -164,7 +171,12 @@ describe('src/lib/addVideo', () => {
 
 			await addVideo(profile);
 
-			expect(error).toHaveBeenCalledWith('Validation failed:\n\t (Youtube link should be in the format https://www.youtube.com/watch?v=...)');
+			const expectedError = [
+				'Validation failed:',
+				'[root] (Youtube link should be in the format https://www.youtube.com/watch?v=...)',
+			].join('\n\t');
+
+			expect(error).toHaveBeenCalledWith(expectedError);
 			expect(outputDir).toMatchFiles(expectedFiles);
 		});
 
@@ -173,7 +185,12 @@ describe('src/lib/addVideo', () => {
 
 			await addVideo(profile);
 
-			expect(error).toHaveBeenCalledWith('Validation failed:\n\t (Duration should be in the format <min>:<sec> or <hour>:<min>:<sec>)');
+			const expectedError = [
+				'Validation failed:',
+				'[root] (Duration should be in the format <min>:<sec> or <hour>:<min>:<sec>)',
+			].join('\n\t');
+
+			expect(error).toHaveBeenCalledWith(expectedError);
 			expect(outputDir).toMatchFiles(expectedFiles);
 		});
 
@@ -182,7 +199,12 @@ describe('src/lib/addVideo', () => {
 
 			await addVideo(profile);
 
-			expect(error).toHaveBeenCalledWith('Validation failed:\n\t (Resolution should be in the format <width>x<height>)');
+			const expectedError = [
+				'Validation failed:',
+				'[root] (Resolution should be in the format <width>x<height>)',
+			].join('\n\t');
+
+			expect(error).toHaveBeenCalledWith(expectedError);
 			expect(outputDir).toMatchFiles(expectedFiles);
 		});
 
@@ -191,7 +213,12 @@ describe('src/lib/addVideo', () => {
 
 			await addVideo(profile);
 
-			expect(error).toHaveBeenCalledWith('Validation failed:\n\t (Date should be in the format YYYY-MM-dd)');
+			const expectedError = [
+				'Validation failed:',
+				'[root] (Date should be in the format YYYY-MM-dd)',
+			].join('\n\t');
+
+			expect(error).toHaveBeenCalledWith(expectedError);
 			expect(outputDir).toMatchFiles(expectedFiles);
 		});
 
@@ -200,7 +227,12 @@ describe('src/lib/addVideo', () => {
 
 			await addVideo(profile);
 
-			expect(error).toHaveBeenCalledWith('Validation failed:\n\t (File not exists)');
+			const expectedError = [
+				'Validation failed:',
+				'[root] (File not exists)',
+			].join('\n\t');
+
+			expect(error).toHaveBeenCalledWith(expectedError);
 			expect(outputDir).toMatchFiles(expectedFiles);
 		});
 
@@ -209,7 +241,12 @@ describe('src/lib/addVideo', () => {
 
 			await addVideo(profile);
 
-			expect(error).toHaveBeenCalledWith('Validation failed:\n\t (File not exists)');
+			const expectedError = [
+				'Validation failed:',
+				'[root] (File not exists)',
+			].join('\n\t');
+
+			expect(error).toHaveBeenCalledWith(expectedError);
 			expect(outputDir).toMatchFiles(expectedFiles);
 		});
 
@@ -218,7 +255,12 @@ describe('src/lib/addVideo', () => {
 
 			await addVideo(profile);
 
-			expect(error).toHaveBeenCalledWith('Validation failed:\n\t (File not exists)');
+			const expectedError = [
+				'Validation failed:',
+				'[root] (File not exists)',
+			].join('\n\t');
+
+			expect(error).toHaveBeenCalledWith(expectedError);
 			expect(outputDir).toMatchFiles(expectedFiles);
 		});
 
@@ -257,7 +299,13 @@ describe('src/lib/addVideo', () => {
 
 				await addVideo(profile);
 
-				expect(error).toHaveBeenCalledWith('Validation failed:\n\t (Invalid input)');
+				const expectedError = [
+					'Validation failed:',
+					'[root] (Invalid input: expected object, received string)',
+					'[root] (Invalid input: expected undefined, received string)',
+				].join('\n\t');
+
+				expect(error).toHaveBeenCalledWith(expectedError);
 			});
 
 			it('should output error if json is broken', async () => {
@@ -267,7 +315,13 @@ describe('src/lib/addVideo', () => {
 
 				await addVideo(profile);
 
-				expect(error).toHaveBeenCalledWith('Validation failed:\n\t (Invalid input)');
+				const expectedError = [
+					'Validation failed:',
+					'[root] (Invalid input: expected object, received string)',
+					'[root] (Invalid input: expected undefined, received string)',
+				].join('\n\t');
+
+				expect(error).toHaveBeenCalledWith(expectedError);
 			});
 		});
 	});

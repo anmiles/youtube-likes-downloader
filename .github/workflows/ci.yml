@@ -15,7 +15,7 @@ jobs:
   install:
     runs-on: ubuntu-latest
     container:
-      image: node:20.19.2-alpine
+      image: node:24.18.0-alpine
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
@@ -29,7 +29,7 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     container:
-      image: node:20.19.2-alpine
+      image: node:24.18.0-alpine
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
@@ -45,7 +45,7 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     container:
-      image: node:20.19.2-alpine
+      image: node:24.18.0-alpine
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
@@ -65,7 +65,7 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     container:
-      image: node:20.19.2-alpine
+      image: node:24.18.0-alpine
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
@@ -81,7 +81,7 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     container:
-      image: node:20.19.2-alpine
+      image: node:24.18.0-alpine
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
